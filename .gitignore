@@ -1,0 +1,11 @@
+# 排除子專案目錄 / Junction 符號連結（不能加結尾斜線，因為 Windows Junction 在 Git 中被視為 Link）
+/LAH-API
+/LAH-FE
+/lah-messenger
+/lah-messenger-server
+
+# 系統暫存與編輯器檔案
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 832.8041416666665 756.9" width="832.8041416666665" height="756.9" style="--bg:#1F1F1F;--fg:#CCCCCC;--line:#CCCCCC;--accent:#0078D4;--muted:#CCCCCCCC;--surface:#181818;--border:#CCCCCC;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <marker id="arrowhead" markerWidth="8" markerHeight="5" refX="7" refY="2.5" orient="auto">
+    <polygon points="0 0, 8 2.5, 0 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+  <marker id="arrowhead-start" markerWidth="8" markerHeight="5" refX="1" refY="2.5" orient="auto-start-reverse">
+    <polygon points="8 0, 0 2.5, 8 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="0.75" stroke-linejoin="round" />
+  </marker>
+</defs>
+<g class="subgraph" data-id="Clients" data-label="客戶端層 (Client Layer)">
+  <rect x="179.2101" y="40" width="525.5149999999999" height="130.7" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="179.2101" y="40" width="525.5149999999999" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="191.2101" y="54" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">客戶端層 (Client Layer)</text>
+</g>
+<g class="subgraph" data-id="Servers" data-label="服務中介層 (Service Layer)">
+  <rect x="154.9996666666667" y="299" width="515.8819999999998" height="161.8" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="154.9996666666667" y="299" width="515.8819999999998" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="166.9996666666667" y="313" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">服務中介層 (Service Layer)</text>
+</g>
+<g class="subgraph" data-id="Storage" data-label="資料持久層 (Persistence Layer)">
+  <rect x="40" y="589.1" width="433.631" height="127.80000000000001" rx="0" ry="0" fill="var(--_group-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="40" y="589.1" width="433.631" height="28" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="52" y="603.1" font-size="12" font-weight="600" fill="var(--_text-sec)" dy="4.199999999999999">資料持久層 (Persistence Layer)</text>
+</g>
+<polyline class="edge" data-from="FE" data-to="API" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="HTTP REST API" points="252.7511,163.14999999999998 252.7511,200.7 102.49314166666659,200.7 102.49314166666659,281 248.21500000000003,281 248.21500000000003,391" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="CLIENT" data-to="API" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="HTTP 業務查詢 API" points="512.2118499999999,146.25 512.2118499999999,212.7 473.94314166666663,212.7 473.94314166666663,281 427.8852,281 427.8852,367 325.43033333333335,367 325.43033333333335,391" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="FE" data-to="WSS" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="WebSocket 雙向長連線" points="310.2921,163.14999999999998 310.2921,212.7 220.3631416666666,212.7 220.3631416666666,269 390.4616,269 390.4616,379 475.49286666666666,379 475.49286666666666,391" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="FE" data-to="WSS" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="HTTP 附件上傳/下載" points="367.83309999999994,163.14999999999998 367.8331,212.7 352.2491416666666,212.7 352.2491416666666,257 417.8852,257 417.8852,355 520.3400666666666,355 520.3400666666666,391" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="CLIENT" data-to="WSS" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="WebSocket 雙向長連線" points="571.0495999999999,146.25 571.0495999999999,212.7 601.3211416666666,212.7 601.3211416666666,281 565.1872666666666,281 565.1872666666666,391" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="CLIENT" data-to="WSS" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="HTTP 附件上傳/下載" points="629.88735,146.25 629.88735,212.7 733.2071416666665,212.7 733.2071416666665,281 610.0344666666666,281 610.0344666666666,391" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="API" data-to="ORACLE" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="OCI / ANSI SQL 存取" points="248.21500000000003,444.8 248.21500000000003,502.8 214.6463333333333,502.8 214.6463333333333,571.1 143.665,571.1 143.66500000000002,633.1" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="API" data-to="SQLITE" data-style="dotted" data-arrow-start="false" data-arrow-end="true" data-label="快取與排程讀寫" points="325.43033333333335,444.8 325.43033333333335,633.1" fill="none" stroke="var(--_line)" stroke-width="1" stroke-dasharray="4 4" marker-end="url(#arrowhead)" />
+<polyline class="edge" data-from="WSS" data-to="SQLITE" data-style="solid" data-arrow-start="false" data-arrow-end="true" data-label="better-sqlite3 頻道讀寫" points="542.7636666666666,444.8 542.7636666666666,502.8 522.2703083333333,502.8 522.2703083333333,571.1 391.53066666666666,571.1 391.53066666666666,633.1" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#arrowhead)" />
+<g class="edge-label" data-from="FE" data-to="API" data-label="HTTP REST API">
+  <rect x="54.993141666666595" y="219.7" width="94.86999999999999" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="102.42814166666659" y="234.85" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">HTTP REST API</text>
+</g>
+<g class="edge-label" data-from="CLIENT" data-to="API" data-label="HTTP 業務查詢 API">
+  <rect x="416.94314166666663" y="219.7" width="113.878" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="473.88214166666666" y="234.85" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">HTTP 業務查詢 API</text>
+</g>
+<g class="edge-label" data-from="FE" data-to="WSS" data-label="WebSocket 雙向長連線">
+  <rect x="153.8631416666666" y="219.7" width="132.886" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="220.30614166666658" y="234.85" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">WebSocket 雙向長連線</text>
+</g>
+<g class="edge-label" data-from="FE" data-to="WSS" data-label="HTTP 附件上傳/下載">
+  <rect x="290.7491416666666" y="219.7" width="122.19400000000003" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="351.84614166666665" y="234.85" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">HTTP 附件上傳/下載</text>
+</g>
+<g class="edge-label" data-from="CLIENT" data-to="WSS" data-label="WebSocket 雙向長連線">
+  <rect x="534.8211416666666" y="219.7" width="132.886" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="601.2641416666665" y="234.85" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">WebSocket 雙向長連線</text>
+</g>
+<g class="edge-label" data-from="CLIENT" data-to="WSS" data-label="HTTP 附件上傳/下載">
+  <rect x="671.7071416666665" y="219.7" width="122.19400000000003" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="732.8041416666665" y="234.85" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">HTTP 附件上傳/下載</text>
+</g>
+<g class="edge-label" data-from="API" data-to="ORACLE" data-label="OCI / ANSI SQL 存取">
+  <rect x="157.64633333333336" y="509.79999999999995" width="113.28400000000002" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="214.28833333333336" y="524.9499999999999" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">OCI / ANSI SQL 存取</text>
+</g>
+<g class="edge-label" data-from="API" data-to="SQLITE" data-label="快取與排程讀寫">
+  <rect x="274.93033333333335" y="509.79999999999995" width="100.81000000000002" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="325.3353333333334" y="524.9499999999999" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">快取與排程讀寫</text>
+</g>
+<g class="edge-label" data-from="WSS" data-to="SQLITE" data-label="better-sqlite3 頻道讀寫">
+  <rect x="457.77030833333333" y="509.79999999999995" width="128.13400000000001" height="30.3" rx="2" ry="2" fill="var(--bg)" stroke="var(--_inner-stroke)" stroke-width="1" />
+  <text x="521.8373083333333" y="524.9499999999999" text-anchor="middle" font-size="11" font-weight="400" fill="var(--_text-sec)" dy="3.8499999999999996">better-sqlite3 頻道讀寫</text>
+</g>
+<g class="node" data-id="FE" data-label="LAH-FE
+智慧管控前端 (Nuxt 2 / Vue 2)
+含 lah-messenger-*.vue 元件群" data-shape="rectangle">
+  <rect x="195.2101" y="92.45" width="230.16399999999996" height="70.7" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="310.2921" y="127.80000000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="310.2921" dy="-12.350000000000001">LAH-FE</tspan><tspan x="310.2921" dy="16.900000000000002">智慧管控前端 (Nuxt 2 / Vue 2)</tspan><tspan x="310.2921" dy="16.900000000000002">含 lah-messenger-*.vue 元件群</tspan></text>
+</g>
+<g class="node" data-id="CLIENT" data-label="lah-messenger
+即時通桌面端 (Electron / Nuxt 2)" data-shape="rectangle">
+  <rect x="453.3741" y="92.45" width="235.35099999999994" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="571.0495999999999" y="119.35000000000001" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="571.0495999999999" dy="-3.9000000000000012">lah-messenger</tspan><tspan x="571.0495999999999" dy="16.900000000000002">即時通桌面端 (Electron / Nuxt 2)</tspan></text>
+</g>
+<g class="node" data-id="API" data-label="LAH-API
+業務核心 RESTful API (PHP 7.3)" data-shape="rectangle">
+  <rect x="170.9996666666667" y="391" width="231.64599999999996" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="286.8226666666667" y="417.9" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="286.8226666666667" dy="-3.9000000000000012">LAH-API</tspan><tspan x="286.8226666666667" dy="16.900000000000002">業務核心 RESTful API (PHP 7.3)</tspan></text>
+</g>
+<g class="node" data-id="WSS" data-label="lah-messenger-server
+即時通訊伺服器 (Node.js / ws)" data-shape="rectangle">
+  <rect x="430.64566666666667" y="391" width="224.23599999999993" height="53.800000000000004" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="542.7636666666666" y="417.9" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="542.7636666666666" dy="-3.9000000000000012">lah-messenger-server</tspan><tspan x="542.7636666666666" dy="16.900000000000002">即時通訊伺服器 (Node.js / ws)</tspan></text>
+</g>
+<g class="node" data-id="ORACLE" data-label="Oracle 9i
+地政核心業務資料庫" data-shape="cylinder">
+  <rect x="56" y="640.1" width="175.32999999999998" height="53.80000000000001" fill="var(--_node-fill)" stroke="none" />
+  <line x1="56" y1="640.1" x2="56" y2="693.9000000000001" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <line x1="231.32999999999998" y1="640.1" x2="231.32999999999998" y2="693.9000000000001" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="143.665" cy="693.9000000000001" rx="87.66499999999999" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="143.665" cy="640.1" rx="87.66499999999999" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="143.665" y="667" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="143.665" dy="-3.9000000000000012">Oracle 9i</tspan><tspan x="143.665" dy="16.900000000000002">地政核心業務資料庫</tspan></text>
+</g>
+<g class="node" data-id="SQLITE" data-label="SQLite 3
+本機快取 / 訊息頻道分庫" data-shape="cylinder">
+  <rect x="259.33" y="640.1" width="198.301" height="53.80000000000001" fill="var(--_node-fill)" stroke="none" />
+  <line x1="259.33" y1="640.1" x2="259.33" y2="693.9000000000001" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <line x1="457.631" y1="640.1" x2="457.631" y2="693.9000000000001" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="358.4805" cy="693.9000000000001" rx="99.1505" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <ellipse cx="358.4805" cy="640.1" rx="99.1505" ry="7" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="358.4805" y="667" text-anchor="middle" font-size="13" font-weight="500" fill="var(--_text)"><tspan x="358.4805" dy="-3.9000000000000012">SQLite 3</tspan><tspan x="358.4805" dy="16.900000000000002">本機快取 / 訊息頻道分庫</tspan></text>
+</g>
+</svg>
