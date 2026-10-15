@@ -252,19 +252,17 @@ SQLite 主要由：
 
 ### 4.1 獨立 Git Repository
 
-四個子專案各自獨立版控：
+工作區根目錄與四個子專案各自獨立版控（根目錄透過 `.gitignore` 排除所有子專案 Junction，僅管理根目錄設定檔與文件）：
 
 ```text
-workspace/
-├── LAH-API/                 # Git Repo
-├── LAH-FE/                  # Git Repo
-├── lah-messenger-server/    # Git Repo
-└── lah-messenger/           # Git Repo
+workspace/                   # Git Repo (僅管理根目錄設定檔與文件)
+├── LAH-API/                 # 獨立 Git Repo (Junction 連結)
+├── LAH-FE/                  # 獨立 Git Repo (Junction 連結)
+├── lah-messenger-server/    # 獨立 Git Repo (Junction 連結)
+└── lah-messenger/           # 獨立 Git Repo (Junction 連結)
 ```
 
-根目錄不是 Git Repo。
-
-執行任何 Git 指令前，必須確認目前位於正確的子專案目錄。
+執行任何 Git 指令前，必須確認目前位於正確的儲存庫目錄（根目錄或各子專案目錄）。
 
 例如：
 
@@ -280,7 +278,7 @@ cd .\LAH-FE
 git diff
 ```
 
-不得將不同子專案的變更視為單一 Git Repository 的變更。
+不得將不同儲存庫的變更視為單一 Git Repository 的變更。
 
 ### 4.2 跨專案修改
 
@@ -291,6 +289,29 @@ git diff
 3. 分別執行測試與驗證。
 4. 最後進行跨專案介面相容性檢查。
 5. 產出各 Repository 的變更摘要。
+
+### 4.3 提交與推送規範 (Commit & Push)
+
+當使用者指示或需要將變更推送到 Git 遠端儲存庫時，Agent 必須遵守以下流程與格式：
+
+1. **先提交再推送**：嚴格依循「檢查狀態 (`git status`/`git diff`) → 暫存變更 (`git add`) → 撰寫詳細繁體中文資訊並提交 (`git commit`) → 推送至遠端 (`git push`)」，嚴禁未提交便推送或省略變更說明。
+2. **Commit 訊息語言**：**一律使用台灣繁體中文**撰寫詳細修改資訊。
+3. **Commit 訊息結構**：
+   - **標題行（Summary）**：採用 Conventional Commits 前綴（如 `feat:`, `fix:`, `docs:`, `chore:`, `refactor:`）搭配簡明繁體中文摘要。
+   - **詳細說明（Body）**：空一行後，必須詳列具體修改資訊，包含：
+     - 修改目的與背景。
+     - 具體修改項目與檔案清單。
+     - 介面相容性或影響範圍說明。
+   - **格式範例**：
+     ```text
+     feat: 新增使用者登入逾時自動重新整理功能
+
+     - 修改目的：避免逾時後未更新 Token 導致 API 回傳 401 錯誤。
+     - 修改項目：
+       - components/lah-login.vue: 加入 15 分鐘計時器並提示倒數通知。
+       - store/auth.js: 新增 refreshToken action 與狀態管理。
+     - 相容性說明：與既有 LAH-API 驗證端點相容，不影響現行登入介面。
+     ```
 
 ---
 
@@ -534,3 +555,5 @@ Agent 的：
 - [ ] 跨專案介面已完成相容性檢查。
 - [ ] 未執行未授權的破壞性操作。
 - [ ] 清楚列出修改檔案與驗證結果。
+- [ ] 若需推送至 Git：嚴格依循以繁體中文撰寫詳細修改資訊（目的、修改項目清單、相容性說明）後提交再推送。
+
