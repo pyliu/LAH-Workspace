@@ -9,8 +9,9 @@
 ## 1. 快速上手
 
 1. **主要入口 [`poteto-mode`](./poteto-mode/SKILL.md)**：處理任何非瑣碎的工程任務（臭蟲修復、效能調校、跨專案功能開發、重構、深入調查）時，直接啟動 `poteto-mode`。它會依據任務性質自動配對 23 個劇本（Playbooks），並按步驟調度其他技能與工程原則。
-2. **技能導覽 [`poteto-help`](./poteto-help/SKILL.md)**：若不確定該使用哪個技能、劇本或原則，可啟動 `poteto-help` 取得建議與提示詞範本。
-3. **模型角色配置 [`setup-pstack`](./setup-pstack/SKILL.md)**：在 Antigravity 中，子代理（`invoke_subagent`）預設遵循系統規範使用 `Model: "inherit"`；若需針對特定角色設定模型層級，可透過 `setup-pstack` 產生 `.agents/rules/pstack-models.md`。
+2. **動工前防呆質詢（`/grill-me` + `/poteto-mode`）**：在設計跨專案架構或修改核心邏輯前同時觸發兩者，Agent 會先自行查明程式碼事實，並針對 LAH 四大雷區（Oracle 9i、SQLite 並行鎖定、PHP 7.3 相容性、跨專案契約）透過 `ask_question` 進行精煉無廢話（`unslop`）的決策對齊；實作後的死角審查則可搭配 [`interrogate`](./interrogate/SKILL.md)。
+3. **技能導覽 [`poteto-help`](./poteto-help/SKILL.md)**：若不確定該使用哪個技能、劇本或原則，可啟動 `poteto-help` 取得建議與提示詞範本。
+4. **模型角色配置 [`setup-pstack`](./setup-pstack/SKILL.md)**：在 Antigravity 中，子代理（`invoke_subagent`）預設遵循系統規範使用 `Model: "inherit"`；若需針對特定角色設定模型層級，可透過 `setup-pstack` 產生 `.agents/rules/pstack-models.md`。
 
 ---
 
@@ -24,7 +25,7 @@
 | 對話紀錄（Transcripts） | 讀取 `<appDataDir>\brain\<conversation-id>\.system_generated\logs\transcript.jsonl`（必要時讀取 `transcript_full.jsonl`） |
 | 註解清理（`no-comments`） | 遵循 [`AGENTS.md`](../../AGENTS.md) 文件完整性規範：**嚴格保留與本次修改無關的所有既有註解與 Docstring**，僅清除本次新增的 AI 廢話敘事註解、死碼與規避藉口 |
 | 資料庫與環境安全紅線 | `LAH-API` 強制維持 `MOCK=true`；嚴禁對 Oracle 9i 自動執行 `DROP` / `TRUNCATE` / `ALTER` 或無條件 `DELETE` / `UPDATE`；安裝套件、修改 `.env`、打包發布前須取得人工授權 |
-| 獨立 Git 儲存庫與 Commit | 根目錄與四個子專案（`LAH-API`、`LAH-FE`、`lah-messenger-server`、`lah-messenger`）各自獨立版控；Commit 訊息一律採用 Conventional Commits 前綴搭配台灣繁體中文詳細說明 |
+| 獨立 Git 儲存庫與 Commit | 根目錄與五個子專案（`LAH-API`、`LAH-FE`、`lah-messenger-server`、`lah-messenger`、`LAH-Updater`）各自獨立版控；Commit 訊息一律採用 Conventional Commits 前綴搭配台灣繁體中文詳細說明 |
 
 ---
 

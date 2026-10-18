@@ -591,3 +591,23 @@ Agent 的：
 1. **強制台灣繁體中文輸出**：觸發 `.agents/skills/` 內任何技能、劇本或派遣子代理（`invoke_subagent`）時，所有對使用者的回覆、調查報告、架構提案、待辦清單、決策紀錄（TSV）、PR 描述與 Commit 訊息，**一律強制使用台灣繁體中文輸出**。
 2. **本契約優先原則**：所有技能執行時均受本 `AGENTS.md` 第 1–12 節約束（包含 `LAH-API` 強制 `MOCK=true`、Oracle 資安紅線、保留與修改無關之既有程式碼註解與 Docstring、以及五個子專案獨立 Git 版控規範）。
 
+### 13.3 常用組合工作流規範（`/grill-me` + `/poteto-mode`）
+
+當使用者同時觸發 `/grill-me` 與 `/poteto-mode`（或要求在動工前進行嚴格架構對齊與防呆質詢）時，Agent 必須遵循以下協同規範：
+
+1. **角色與態度（Candor over Sycophancy）**：
+   - 扮演直白、嚴謹且拒絕盲從的資深系統架構師（遵循 `poteto-mode` 的「No is an acceptable answer」原則）。若使用者的初步構想存在架構破口或違反 `AGENTS.md` 邊界，必須第一時間直接點破並提出替代方案。
+2. **先查證事實，再質詢決策（Evidence before Questions）**：
+   - 凡可透過讀取程式碼確認的客觀事實（既有欄位、函式簽章、呼叫端位置），Agent 必須先自行查明，**嚴禁將查得到的程式碼事實丟回給使用者回答**。
+   - 僅針對「架構設計取捨、邊界條件策略、跨專案相容方案、產品行為偏好」發起質詢。
+3. **LAH 系統四大必審雷區**：
+   - **Oracle 9i 與 SQL 安全**：空值處理、`IN` 子句限制、ANSI/OCI 語法相容性、無破壞性操作。
+   - **SQLite 跨端並行**：`LAH-API` (PHP) 與 `lah-messenger-server` (Node.js) 共同讀寫時的 Busy Timeout、Lock 與 Transaction 邊界。
+   - **執行期版本與環境約束**：`LAH-API` 嚴守 PHP 7.3 語法與 `MOCK=true` 防護；前端嚴守 Vue 2 / Nuxt 2 Options API 與回應狀態碼檢查；`LAH-Updater` 嚴守 Python 3.10+ 標準庫零外部依賴。
+   - **跨專案介面契約**：HTTP API 回應結構與 WebSocket 事件對 `LAH-FE`、`lah-messenger` 及舊版 HTML 頁面的向下相容性。
+4. **互動與輸出格式（`unslop` + `ask_question`）**：
+   - **極簡高密度**：套用 [`unslop`](./.agents/skills/unslop/SKILL.md) 規範，禁止客套開場白與長篇空泛理論，每道問題背景控制在 1～3 句話內，直指核心風險。
+   - **結構化決策**：使用 Antigravity 的 `ask_question` 工具沿決策樹推進，每個問題皆須提供明確的 `(Recommended)` 推薦選項與理由，待關鍵設計分支全數對齊後再動手實作。
+5. **事後死角審查（搭配 [`interrogate`](./.agents/skills/interrogate/SKILL.md)）**：
+   - 若使用者於程式碼修改後要求進行嚴苛審查，自動結合 [`interrogate`](./.agents/skills/interrogate/SKILL.md) 技能，僅條列具體邊界漏洞、型別不一致與資安風險，不輸出無關的冗長重構。
+
