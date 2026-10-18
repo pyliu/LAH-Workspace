@@ -1,0 +1,7 @@
+#!/usr/bin/env bun
+// watch-pr 可執行腳本入口：確認依賴已安裝後載入並執行 CLI 主程式
+import { ensureDependenciesInstalled } from "../bootstrap.ts";
+
+ensureDependenciesInstalled();
+const { main } = await import("./cli.ts");
+process.exitCode = await main(process.argv.slice(2));

@@ -557,3 +557,23 @@ Agent 的：
 - [ ] 清楚列出修改檔案與驗證結果。
 - [ ] 若需推送至 Git：嚴格依循以繁體中文撰寫詳細修改資訊（目的、修改項目清單、相容性說明）後提交再推送。
 
+---
+
+## 13. 工作區內建工程技能庫（`.agents/skills/`）
+
+本工作區於 [`.agents/skills/`](./.agents/skills/README.md) 內建移植自 **pstack** 的 54 個工程技能（Skills），已全數轉為**台灣繁體中文**並適配 Antigravity 與本專案架構契約。
+
+### 13.1 核心技能與使用方式
+
+- **總路由技能 [`poteto-mode`](./.agents/skills/poteto-mode/SKILL.md)**：處理複雜功能開發、跨專案修改、臭蟲根因追查、效能調校與重構時的核心入口（內含 23 個劇本 Playbooks 與 24 項工程原則 `principle-*`）。
+- **常用獨立技能**：
+  - 調查與理解：[`how`](./.agents/skills/how/SKILL.md)（機制解析）、[`why`](./.agents/skills/why/SKILL.md)（歷史與設計原因考證）、[`teach`](./.agents/skills/teach/SKILL.md)（圖解教學）、[`blast-radius`](./.agents/skills/blast-radius/SKILL.md)（變更爆炸半徑與跨專案影響分析）。
+  - 設計與平行探索：[`architect`](./.agents/skills/architect/SKILL.md)（跨邊界介面設計）、[`arena`](./.agents/skills/arena/SKILL.md)（多方案平行實作比較）、[`swarm`](./.agents/skills/swarm/SKILL.md)（平行切片檢查與彙整）。
+  - 品質、驗證與寫作：[`interrogate`](./.agents/skills/interrogate/SKILL.md)（對抗式程式碼審查）、[`tdd`](./.agents/skills/tdd/SKILL.md)（測試驅動修復）、[`unslop`](./.agents/skills/unslop/SKILL.md)（去除 AI 贅字與生硬句型）、[`technical-writing`](./.agents/skills/technical-writing/SKILL.md)（技術文件與繁中 Commit 撰寫標準）、[`poteto-help`](./.agents/skills/poteto-help/SKILL.md)（技能選擇指南）。
+- 完整技能清單、23 個劇本與 24 項工程原則請參閱 [`.agents/skills/README.md`](./.agents/skills/README.md)。
+
+### 13.2 技能執行與強制繁體中文輸出約束
+
+1. **強制台灣繁體中文輸出**：觸發 `.agents/skills/` 內任何技能、劇本或派遣子代理（`invoke_subagent`）時，所有對使用者的回覆、調查報告、架構提案、待辦清單、決策紀錄（TSV）、PR 描述與 Commit 訊息，**一律強制使用台灣繁體中文輸出**。
+2. **本契約優先原則**：所有技能執行時均受本 `AGENTS.md` 第 1–12 節約束（包含 `LAH-API` 強制 `MOCK=true`、Oracle 資安紅線、保留與修改無關之既有程式碼註解與 Docstring、以及四個子專案獨立 Git 版控規範）。
+
