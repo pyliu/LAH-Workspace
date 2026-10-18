@@ -23,7 +23,7 @@
 
 ## 1. 工作區與系統架構
 
-工作區根目錄統籌四個平級獨立子專案，以符號連結（Junction）與各自獨立的 Git Repository 運作：
+工作區根目錄統籌五個平級獨立子專案，以符號連結（Junction）與各自獨立的 Git Repository 運作：
 
 | 子專案目錄 | 角色定位 | 核心技術棧 | 主要功能與職責 |
 |---|---|---|---|
@@ -31,6 +31,7 @@
 | `./LAH-FE/` | 智慧管控前端應用 | Nuxt.js 2 (Vue 2), BootstrapVue | 智慧監控管理介面，內嵌移植版即時通元件（`lah-messenger-*.vue`） |
 | `./lah-messenger-server/` | 即時通訊 WebSocket 伺服器 | Node.js, Express, `ws`, SQLite 3 | 維護高併發長連線推播、頻道分庫（`db/<channel>.db`）、附件儲存 |
 | `./lah-messenger/` | 桃園即時通桌面客戶端 | Electron 39, Nuxtron, Vue 2 | 跨平台桌面端即時通訊，對接 API 與即時通伺服器 |
+| `./LAH-Updater/` | 系統自動更新部署工具 | Python 3.10+ (`tkinter`), PyInstaller | 提供各地政事務所管理師讀取 `.zip` 更新包自動對齊解壓，並控制 Apache 與 PM2 服務重啟 |
 
 ### 資料流與服務拓撲
 
@@ -65,7 +66,7 @@ flowchart TD
 
 ## 2. Agentic 協同架構體系
 
-在面對異質技術棧（PHP + Oracle、Node.js + SQLite、Nuxt 2 前端、Electron 桌面端）的龐大系統時，傳統的「單一對話、全域修改」容易引發介面不同步、語法不相容或破壞性資料庫操作。
+在面對異質技術棧（PHP + Oracle、Node.js + SQLite、Nuxt 2 前端、Electron 桌面端、Python 部署工具）的龐大系統時，傳統的「單一對話、全域修改」容易引發介面不同步、語法不相容或破壞性資料庫操作。
 
 本工作區導入 **Agentic Engineering 體系**，將 AI 由單純的自動補全工具提升為**具備邊界意識與安全規範的自主代理人**。
 
@@ -80,17 +81,20 @@ flowchart TD
         A_FE["FE Subagent<br/>[LAH-FE]<br/>專注 Vue 2 / Nuxt 生命週期"]
         A_WSS["Server Subagent<br/>[lah-messenger-server]<br/>專注 Node.js / ws 事件推播"]
         A_CLIENT["Client Subagent<br/>[lah-messenger]<br/>專注 Electron / Main & Renderer"]
+        A_UPDATER["Updater Subagent<br/>[LAH-Updater]<br/>專注 Python 標準庫 / 部署防呆"]
     end
 
     MASTER -- "指派任務與邊界約束" --> A_API
     MASTER -- "指派任務與邊界約束" --> A_FE
     MASTER -- "指派任務與邊界約束" --> A_WSS
     MASTER -- "指派任務與邊界約束" --> A_CLIENT
+    MASTER -- "指派任務與邊界約束" --> A_UPDATER
 
     A_API -- "完成回報與變更差異" --> MASTER
     A_FE -- "完成回報與變更差異" --> MASTER
     A_WSS -- "完成回報與變更差異" --> MASTER
     A_CLIENT -- "完成回報與變更差異" --> MASTER
+    A_UPDATER -- "完成回報與變更差異" --> MASTER
 
     MASTER -- "跨專案介面相容性檢查<br/>產出整合變更矩陣" --> USER
 ```
@@ -98,10 +102,10 @@ flowchart TD
 1. **Master Agent（架構主控代理）**：
    - 負責接收複雜需求並識別受影響之子專案。
    - 評估是否跨越專案邊界（HTTP API、WebSocket Payload 或 SQLite Schema）。
-   - 進行跨端整合驗證，並產出繁體中文之跨專案變更矩陣報告。
+   - 進行跨端整合驗證，並產出台灣繁體中文之跨專案變更矩陣報告。
 2. **Subagents（專責子代理）**：
    - 各自鎖定單一子專案 Repository，嚴禁無故跨庫修改非權責之檔案。
-   - 恪守該子專案之特定版本語法規範（如 LAH-API 嚴格鎖定 PHP 7.3.x，禁止 PHP 7.4+/8.x 語法）。
+   - 恪守該子專案之特定版本語法規範（如 LAH-API 嚴格鎖定 PHP 7.3.x，禁止 PHP 7.4+/8.x 語法；LAH-Updater 嚴格僅使用 Python 標準庫）。
 
 ### 2.2 規則繼承與邊界契約 (`AGENTS.md`)
 
@@ -112,11 +116,12 @@ flowchart TD
     ├── LAH-API/AGENTS.md (後端特定規範)
     ├── LAH-FE/AGENTS.md (前端特定規範)
     ├── lah-messenger-server/AGENTS.md (伺服器特定規範)
-    └── lah-messenger/AGENTS.md (桌面客戶端特定規範)
+    ├── lah-messenger/AGENTS.md (桌面客戶端特定規範)
+    └── LAH-Updater/AGENTS.md (自動更新部署工具特定規範)
 ```
 
 - **全域規則具備最高約束力**：子專案規則不得違反根目錄定義之資安紅線與架構邊界。
-- 完整契約規範請參閱 [AGENTS.md](file:///d:/DEV/lah-workspace/AGENTS.md)。
+- 完整契約規範請參閱 [AGENTS.md](./AGENTS.md)。
 
 ---
 
@@ -152,13 +157,13 @@ Agent 在呼叫工具執行命令時遵守最小權限原則：
 
 - **綠燈（自動授權執行）**：
   - 唯讀搜尋、`git status`、`git diff`。
-  - 程式碼語法檢查（`php -l`、`node -c`）。
+  - 程式碼語法檢查（`php -l`、`node -c`、`python -m py_compile`）。
   - 程式碼風格與靜態分析（`yarn lint` / `npm run lint`）。
   - 單元測試與 Dry-run 執行。
 - **紅燈（必須取得人工確認）**：
   - 套件異動（`npm install`、`composer require` 等）。
   - 環境變數修改（`.env`）。
-  - 正式建置打包（`nuxtron build`、`electron-builder`）。
+  - 正式建置打包（`nuxtron build`、`electron-builder`、`pyinstaller`）。
   - 涉及資料庫寫入或不可逆的檔案異動。
 
 ---
@@ -180,7 +185,7 @@ sequenceDiagram
     Agent->>Repo: 檢查 LAH-API 是否處於 MOCK=true
     Agent->>Agent: 判斷是否跨專案？制定最小變更計畫 (Minimal Diff)
     Agent->>Repo: 執行修改 (保留既有註解與命名風格)
-    Agent->>Check: 執行語法驗證 (php -l / node -c / lint)
+    Agent->>Check: 執行語法驗證 (php -l / node -c / lint / py_compile)
     Agent->>Check: 跨端介面相容性檢查 (REST / WS)
     Agent->>Dev: 產出台灣繁體中文變更矩陣報告
 ```
@@ -201,7 +206,7 @@ sequenceDiagram
 根目錄提供了一鍵化開發流程腳本：
 
 ### 一鍵啟動所有本機服務
-雙擊或終端執行根目錄的 [start_dev.bat](file:///d:/DEV/lah-workspace/start_dev.bat)：
+雙擊或終端執行根目錄的 [start_dev.bat](./start_dev.bat)：
 ```cmd
 .\start_dev.bat
 ```
@@ -211,7 +216,7 @@ sequenceDiagram
 - 自動喚起預設瀏覽器開啟 `http://127.0.0.1:8080`。
 
 ### 一鍵終止所有本機服務
-雙擊或終端執行根目錄的 [stop_dev.bat](file:///d:/DEV/lah-workspace/stop_dev.bat)：
+雙擊或終端執行根目錄的 [stop_dev.bat](./stop_dev.bat)：
 ```cmd
 .\stop_dev.bat
 ```
@@ -223,6 +228,6 @@ sequenceDiagram
 
 - **根目錄（本 Repository）**：
   - 專門版控工作區級別之設定檔（`AGENTS.md`、`README.md`、`start_dev.bat`、`stop_dev.bat`、架構圖）。
-  - 透過 `.gitignore` 明確排除四個子專案的 Junction 連結，確保不會將子專案檔案重複納入。
+  - 透過 `.gitignore` 明確排除五個子專案的 Junction 連結，確保不會將子專案檔案重複納入。
 - **子專案（各獨立 Repository）**：
   - 各子專案維持獨立 Git Branch、Commit 與 Remote，由開發者或專責 Subagent 分別進行 Commit 與 Push。

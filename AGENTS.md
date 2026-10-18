@@ -1,13 +1,13 @@
 # LAH 系統全域架構契約
 
-> 適用範圍：本工作區根目錄及其四個平級 Git 子專案。  
+> 適用範圍：本工作區根目錄及其五個平級 Git 子專案。  
 > 目的：建立 AI Agent（含 Master Agent / Subagents）在跨專案開發、修改程式碼、執行終端指令與驗證時必須遵守的系統邊界與安全規則。
 
 ---
 
 ## 1. 工作區與系統拓撲
 
-工作區根目錄本身**不是 Git Repository**，僅作為四個獨立子專案的容器。
+工作區根目錄本身僅管理全域設定與文件，透過 Junction 整合五個獨立子專案容器：
 
 | 目錄 | 系統角色 | 核心技術與版本 | 主要職責 |
 |---|---|---|---|
@@ -15,6 +15,7 @@
 | `./LAH-FE/` | 智慧管控系統前端 | Nuxt 2.15.8 (Vue 2)、BootstrapVue 2.23.0 | 提供智慧監控管理介面，並內嵌即時通功能（移植元件群 `lah-messenger-*.vue`）；透過 HTTP 呼叫 `LAH-API`，並透過 WebSocket/HTTP 與 `lah-messenger-server` 進行即時通訊 |
 | `./lah-messenger-server/` | 即時通伺服器 | Node.js (CommonJS)、ws ^7.4.6、Express ^4 | 維持 WebSocket 長連線、處理即時事件與附件，並存取 SQLite |
 | `./lah-messenger/` | 桃園即時通桌面客戶端 | Electron 39.8.10、Nuxt 2.15.8、Nuxtron ^0.3.1 | 透過 HTTP 呼叫 `LAH-API` 處理業務功能，透過 WebSocket 連線即時通伺服器 |
+| `./LAH-Updater/` | 系統自動更新部署工具 | Python 3.10+ 標準庫 (`tkinter`)、PyInstaller | 供各地政事務所管理師讀取更新壓縮包 (`.zip`) 自動對齊解壓覆蓋，並控制 Apache 與 PM2 服務重啟 |
 
 ### 1.1 資料流向與架構拓撲
 
@@ -51,7 +52,8 @@ flowchart TD
 > 1. `LAH-API` 作為後端核心資料樞紐，唯一負責對接 `Oracle 9i`。  
 > 2. `lah-messenger-server` 專注於 WebSocket 高併發雙向推播與附件處理，資料庫層採獨立 SQLite 頻道分庫架構。  
 > 3. `LAH-FE` 亦移植整合了 `lah-messenger` 即時通功能（`components/lah-messenger-*.vue` 元件群），與 `lah-messenger` 桌面端同樣透過 WebSocket 及 HTTP 與 `lah-messenger-server` 保持通訊。  
-> 4. `LAH-FE` 與 `lah-messenger` 桌面端一律透過標準協定呼叫對應伺服器，嚴格禁止直接穿透存取資料庫。
+> 4. `LAH-FE` 與 `lah-messenger` 桌面端一律透過標準協定呼叫對應伺服器，嚴格禁止直接穿透存取資料庫。  
+> 5. `LAH-Updater` 為獨立維運部署工具，負責將打包後之 `www.zip`、`LAH-NUXTJS.zip`、`node_modules.zip`、`lah-messenger-server.zip` 部署至目標伺服器並協助重啟 Apache 及 PM2 服務。
 
 ### 1.2 系統邊界
 
@@ -121,6 +123,15 @@ flowchart TD
   - Windows 全架構安裝包建置：`npm run build:win`（執行 `nuxtron build --win --ia32 --x64`）
   - Windows 32 位元安裝包建置：`npm run build:x86`（執行 `nuxtron build --win --ia32`）
   - Windows 64 位元安裝包建置：`npm run build:x64`（執行 `nuxtron build --win --x64`）
+
+#### 5. `./LAH-Updater/` (系統自動更新部署工具)
+- **環境與主要依賴**：
+  - Runtime：`Python 3.10+`（嚴格僅使用 Python 標準庫 `tkinter`, `ttk`, `zipfile`, `subprocess`, `threading`, `ctypes` 等，零外部執行期依賴）
+  - 打包工具：`PyInstaller`（僅開發期編譯單一 `.exe` 使用）
+- **常用測試與打包指令**：
+  - 語法檢查：`python -m py_compile updater.py`
+  - 直接啟動 GUI：`python updater.py`
+  - 單一執行檔打包（需人工確認）：`pyinstaller --noconfirm --onefile --windowed --uac-admin --name "智慧控管與監控系統 - 自動更新工具" updater.py`
 
 ---
 
@@ -252,14 +263,15 @@ SQLite 主要由：
 
 ### 4.1 獨立 Git Repository
 
-工作區根目錄與四個子專案各自獨立版控（根目錄透過 `.gitignore` 排除所有子專案 Junction，僅管理根目錄設定檔與文件）：
+工作區根目錄與五個子專案各自獨立版控（根目錄透過 `.gitignore` 排除所有子專案 Junction，僅管理根目錄設定檔與文件）：
 
 ```text
 workspace/                   # Git Repo (僅管理根目錄設定檔與文件)
 ├── LAH-API/                 # 獨立 Git Repo (Junction 連結)
 ├── LAH-FE/                  # 獨立 Git Repo (Junction 連結)
 ├── lah-messenger-server/    # 獨立 Git Repo (Junction 連結)
-└── lah-messenger/           # 獨立 Git Repo (Junction 連結)
+├── lah-messenger/           # 獨立 Git Repo (Junction 連結)
+└── LAH-Updater/             # 獨立 Git Repo (Junction 連結)
 ```
 
 執行任何 Git 指令前，必須確認目前位於正確的儲存庫目錄（根目錄或各子專案目錄）。
@@ -356,7 +368,7 @@ git diff
 - 唯讀搜尋
 - `git status`
 - `git diff`
-- 程式碼語法檢查（如 `php -l`、`node -c`）
+- 程式碼語法檢查（如 `php -l`、`node -c`、`python -m py_compile`）
 - Lint 檢查（如 `yarn lint` / `npm run lint`）
 - 型別檢查
 - 單元測試
@@ -375,7 +387,7 @@ git diff
 - 修改正式環境設定
 - 建立或修改資料庫 Schema
 - 連線至正式／測試資料庫執行寫入
-- `electron-builder` / `nuxtron build`（產出正式安裝套件或打包）
+- `electron-builder` / `nuxtron build` / `pyinstaller`（產出正式安裝套件或打包）
 - 發布或部署
 - 任何可能覆寫既有資料或環境的操作
 
@@ -505,6 +517,7 @@ Agent 的：
 | `LAH-FE` | `path/to/file` | 說明 | 已確認／未確認 |
 | `lah-messenger-server` | `path/to/file` | 說明 | 已確認／未確認 |
 | `lah-messenger` | `path/to/file` | 說明 | 已確認／未確認 |
+| `LAH-Updater` | `path/to/file` | 說明 | 已確認／未確認 |
 
 若某 Repository 未修改，可省略該列。
 
@@ -522,7 +535,8 @@ Agent 的：
         ├── LAH-API/AGENTS.md
         ├── LAH-FE/AGENTS.md
         ├── lah-messenger-server/AGENTS.md
-        └── lah-messenger/AGENTS.md
+        ├── lah-messenger/AGENTS.md
+        └── LAH-Updater/AGENTS.md
 ```
 
 - 根目錄 `AGENTS.md`：定義跨專案架構、資料邊界、安全與協作規則。
@@ -575,5 +589,5 @@ Agent 的：
 ### 13.2 技能執行與強制繁體中文輸出約束
 
 1. **強制台灣繁體中文輸出**：觸發 `.agents/skills/` 內任何技能、劇本或派遣子代理（`invoke_subagent`）時，所有對使用者的回覆、調查報告、架構提案、待辦清單、決策紀錄（TSV）、PR 描述與 Commit 訊息，**一律強制使用台灣繁體中文輸出**。
-2. **本契約優先原則**：所有技能執行時均受本 `AGENTS.md` 第 1–12 節約束（包含 `LAH-API` 強制 `MOCK=true`、Oracle 資安紅線、保留與修改無關之既有程式碼註解與 Docstring、以及四個子專案獨立 Git 版控規範）。
+2. **本契約優先原則**：所有技能執行時均受本 `AGENTS.md` 第 1–12 節約束（包含 `LAH-API` 強制 `MOCK=true`、Oracle 資安紅線、保留與修改無關之既有程式碼註解與 Docstring、以及五個子專案獨立 Git 版控規範）。
 
