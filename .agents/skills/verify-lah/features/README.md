@@ -7,7 +7,7 @@
 - `./LAH-API/www/.env` 中已設定 `MOCK=true`。
 - 執行 `node .agents/skills/verify-lah/scripts/control-lah.js launch` 啟動所有核心服務：
   - `LAH-API`：`http://127.0.0.1:80`（在事務所開發 PC 上直接沿用常駐 Apache 2.4 `httpd` 服務；僅在無常駐 Apache 的筆電環境下才會退回執行 `./LAH-API/www/run_dev_http.bat` 的 `php -S` 折衷測試方案）
-  - `LAH-FE`：`http://127.0.0.1:8080`
+  - `LAH-FE`：`http://127.0.0.1:8080`（若使用者已於筆電或事務所 PC 自行啟動 `yarn dev`，直接沿用且不重複啟動，`cleanup` 時亦予以保留；僅在未啟動時才由測試架代為啟動）
   - `lah-messenger-server`：`ws://127.0.0.1:8081`（WebSocket）與 `http://127.0.0.1:8082`（HTTP 附件 API）
   - `Headless Chrome CDP`：`http://127.0.0.1:9222`
 - 執行 `node .agents/skills/verify-lah/scripts/control-lah.js doctor`，確認所有 6 項健康檢查與 `MOCK=true` 安全護欄皆為 `PASS`，並從輸出確認當前 `LAH-API` 宿主模式（`事務所開發PC常駐 Apache 2.4` 或 `筆電折衷 PHP 內建伺服器`）。

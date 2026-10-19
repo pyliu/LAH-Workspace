@@ -13,23 +13,28 @@ description: "驅動並驗證 LAH 智慧控管與監控系統工作區（涵蓋 
 > 3. **雙開發環境識別（事務所開發 PC 常駐 Apache 2.4 vs 筆電折衷 `run_dev_http.bat`）**：
 >    - **事務所開發 PC（標準環境）**：已安裝常駐型 **Apache 2.4 + PHP** 服務（程序名稱 `httpd`）監聽 Port `80`。在此環境下，`launch` 會自動偵測並直接沿用常駐 Apache，`cleanup` **絕不停止 `httpd`**。
 >    - **筆電開發環境（折衷方案）**：因未安裝常駐型 Apache，才透過 `./LAH-API/www/run_dev_http.bat`（執行 `php.exe -S 0.0.0.0:80 -t .`）啟動 PHP 內建單執行緒開發伺服器。`launch` 僅在 Port `80` 無服務監聽時才會退回使用此折衷方案，且在筆電折衷模式下需注意 PHP 內建伺服器為**單執行緒（Single-threaded）**，不支援 `.htaccess` 且同時間僅能處理單一請求（若後端發生對自身 `:80` 的 Loopback HTTP 呼叫會死鎖），不可將 `run_dev_http.bat` 誤認為正式或事務所標準架構。
+> 4. **優先沿用並保護使用者已啟動之前端開發環境（`LAH-FE` `yarn dev`）**：
+>    - 使用者無論在筆電或事務所開發 PC，通常會自行啟動 `LAH-FE` 前端開發環境（`yarn dev` 監聽 Port `8080`）。
+>    - `launch` 檢測到 Port `8080`（或 `:8081`）已有啟動中的服務時，**一律直接沿用，絕不重複啟動**；且在 `.state/pids.json` 中標記 `spawnedByUs: false`，確保執行 `cleanup` 時**原樣保留使用者自行啟動的前端開發環境，絕不誤砍**。
 
 ---
 
 ## 1. 啟動（Launch）
 
-使用內建輔助腳本 [`scripts/control-lah.js`](scripts/control-lah.js) 一鍵啟動工作區所有驗證目標服務與無頭瀏覽器（Headless Chrome CDP）：
+使用內建輔助腳本 [`scripts/control-lah.js`](scripts/control-lah.js) 檢查並補齊工作區驗證所需服務與無頭瀏覽器（Headless Chrome CDP）：
 
 ```powershell
 node .agents/skills/verify-lah/scripts/control-lah.js launch
 ```
 
-- **服務拓撲與連接埠**：
+- **服務拓撲與連接埠（智慧偵測，已啟動則不重複啟動）**：
   - `LAH-API`（PHP 7.3 REST API）：`http://127.0.0.1:80`
     - **事務所開發 PC**：自動偵測到 Port `80` 常駐 `httpd`（Apache 2.4）時直接沿用，略過 `run_dev_http.bat`。
     - **筆電開發環境**：當 Port `80` 未被占用時，才會退回執行 `./LAH-API/www/run_dev_http.bat`（`php.exe -S 0.0.0.0:80 -t .`）折衷方案，並於 `cleanup` 時回收該臨時 `php` 進程。
-  - `LAH-FE`（Nuxt 2.15.8 智慧管控前端）：`http://127.0.0.1:8080`（若 `./LAH-FE/.nuxt/dist/server` 存在，預設以 `nuxt start` 快速啟動；若剛修改過 `./LAH-FE` 原始碼但尚未重新建置，請改加 `--fe-mode dev` 參數以 `nuxt` 開發熱編譯模式啟動：`node .agents/skills/verify-lah/scripts/control-lah.js launch --fe-mode dev`）。
-  - `lah-messenger-server`（Node.js 即時通伺服器）：WebSocket 監聽 `ws://127.0.0.1:8081`，附件 HTTP API 監聽 `http://127.0.0.1:8082`。
+  - `LAH-FE`（Nuxt 2.15.8 智慧管控前端）：`http://127.0.0.1:8080`
+    - **已啟動（常態）**：使用者通常已在筆電或事務所 PC 自行啟動 `yarn dev`；`launch` 偵測到 Port `8080` 已在監聽時會直接沿用，不會再自行啟動，且 `cleanup` 時亦會保留該進程。
+    - **未啟動**：僅在 Port `8080` 閒置時才會由測試架代為啟動（並於 `cleanup` 時回收）。
+  - `lah-messenger-server`（Node.js 即時通伺服器）：WebSocket 監聽 `ws://127.0.0.1:8081`，附件 HTTP API 監聽 `http://127.0.0.1:8082`（若使用者已啟動則同樣直接沿用並於 `cleanup` 保留）。
   - `Headless Chrome CDP`（瀏覽器控制測試架）：監聽 `http://127.0.0.1:9222`，使用隔離設定檔目錄 `.agents/skills/verify-lah/.state/chrome-profile`。
 - **就緒判定標準（Readiness）**：
   - 單純 Port 有回應不代表就緒（Nuxt 2 在 Webpack 編譯期間也會回傳 HTTP 200 的 Loading 畫面）。`launch` 會持續輪詢直到 `http://127.0.0.1:8080/` 回傳包含 `id="__nuxt"` 且不含 `nuxt_loading_screen` 的完整渲染 HTML，同時確認 `:80`、`:8081`、`:8082` 與 `:9222` 皆可正常服務後才返回。
@@ -152,7 +157,7 @@ node .agents/skills/verify-lah/scripts/control-lah.js cleanup
 ```
 
 `cleanup` 的精確行為保證：
-- **精準終止進程**：僅終止占用 Port `8080`、`8081`、`8082`、`9222` 的驗證程序，以及由本次 `launch` 啟動的 Port `80` PHP 測試伺服器。**若 Port `80` 為既有 Apache (`httpd`) 服務，一律原樣保留**。
+- **精準終止進程（嚴格保護使用者既有開發環境）**：依據 `.state/pids.json` 中的 `spawnedByUs` 紀錄，**僅終止由本次 `launch` 代為啟動的程序**（如 Headless Chrome CDP `:9222` 或測試架臨時補啟動的服務）。**若使用者在執行驗證前已自行啟動 `LAH-FE`（`yarn dev` `:8080`）、`lah-messenger-server`（`:8081`/`:8082`）或常駐 Apache（`httpd` `:80`），`cleanup` 一律原樣保留，絕不誤砍**。
 - **清除隔離測試資料**：自動刪除 `./lah-messenger-server/db/verify_test_*.db*` 測試資料庫與 `./lah-messenger-server/uploads/verify_test_*` 測試附件目錄，確保零殘留。
 - **保留驗證證據**：清理過程只移除 `.agents/skills/verify-lah/.state/`，**絕不刪除 `.agents/skills/verify-lah/artifacts/` 下的任何證明檔案**。
 

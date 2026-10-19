@@ -47,12 +47,25 @@ function ensureDir (dir) {
 
 function loadState () {
   if (!fs.existsSync(PIDS_FILE)) {
-    return { spawnedPids: {}, preExistingPort80: false, startedAt: null }
+    return {
+      spawnedPids: {},
+      spawnedByUs: { api: false, fe: false, wss: false, chrome: false },
+      preExistingPort80: false,
+      startedAt: null
+    }
   }
   try {
-    return JSON.parse(fs.readFileSync(PIDS_FILE, 'utf8'))
+    const parsed = JSON.parse(fs.readFileSync(PIDS_FILE, 'utf8'))
+    parsed.spawnedPids = parsed.spawnedPids || {}
+    parsed.spawnedByUs = parsed.spawnedByUs || { api: false, fe: false, wss: false, chrome: false }
+    return parsed
   } catch (e) {
-    return { spawnedPids: {}, preExistingPort80: false, startedAt: null }
+    return {
+      spawnedPids: {},
+      spawnedByUs: { api: false, fe: false, wss: false, chrome: false },
+      preExistingPort80: false,
+      startedAt: null
+    }
   }
 }
 
@@ -301,11 +314,13 @@ async function cmdLaunch (flags) {
     const isApache = /httpd|apache/i.test(p80.name)
     console.log(`[INFO] Port 80 偵測到${isApache ? '事務所開發 PC 常駐 Apache 2.4 服務' : '既有服務'} (${p80.name}, PID ${p80.pid})，直接沿用且略過 run_dev_http.bat。`)
     state.preExistingPort80 = true
+    if (!state.spawnedByUs.api) state.spawnedByUs.api = false
     state.apiMode = isApache ? 'apache-resident' : `existing-${p80.name}`
   } else {
     console.log('[LAUNCH] Port 80 未偵測到常駐 Apache，啟用筆電開發折衷方案 (LAH-API/www/run_dev_http.bat -> php -S 0.0.0.0:80 -t .)...')
     const pid = spawnDetached('php.exe', ['-S', '0.0.0.0:80', '-t', '.'], API_DIR, 'lah-api')
     state.spawnedPids.api = pid
+    state.spawnedByUs.api = true
     state.preExistingPort80 = false
     state.apiMode = 'php-builtin-fallback'
   }
@@ -313,30 +328,35 @@ async function cmdLaunch (flags) {
   // 2. lah-messenger-server (:8081 / :8082)
   const p8081 = getListeningProcess(PORTS.WS)
   if (p8081) {
-    console.log(`[INFO] Port 8081 已由程序占用 (${p8081.name}, PID ${p8081.pid})。`)
+    console.log(`[INFO] Port 8081 偵測到已啟動之 lah-messenger-server (${p8081.name}, PID ${p8081.pid})，直接沿用且不重複啟動。`)
+    if (!state.spawnedByUs.wss) state.spawnedByUs.wss = false
   } else {
     console.log('[LAUNCH] 啟動 lah-messenger-server (node server.js)...')
     const pid = spawnDetached(process.execPath, ['server.js'], WSS_DIR, 'lah-messenger-server')
     state.spawnedPids.wss = pid
+    state.spawnedByUs.wss = true
   }
 
-  // 3. LAH-FE (:8080)
+  // 3. LAH-FE (:8080) — 使用者在筆電或事務所 PC 常自行啟動 yarn dev，若已存在則直接沿用，絕不重複啟動或於 cleanup 時關閉
   const p8080 = getListeningProcess(PORTS.FE)
   if (p8080) {
-    console.log(`[INFO] Port 8080 已由程序占用 (${p8080.name}, PID ${p8080.pid})。`)
+    console.log(`[INFO] Port 8080 偵測到已啟動之 LAH-FE 前端開發環境 (${p8080.name}, PID ${p8080.pid})，直接沿用（不重複啟動，cleanup 亦將保留）。`)
+    if (!state.spawnedByUs.fe) state.spawnedByUs.fe = false
   } else {
     const feMode = flags['fe-mode'] || (fs.existsSync(path.join(FE_DIR, '.nuxt', 'dist', 'server')) ? 'start' : 'dev')
     const nuxtBin = path.join(FE_DIR, 'node_modules', 'nuxt', 'bin', 'nuxt.js')
     const nuxtArgs = feMode === 'start' ? [nuxtBin, 'start'] : [nuxtBin]
-    console.log(`[LAUNCH] 啟動 LAH-FE (mode=${feMode}, Port 8080)...`)
+    console.log(`[LAUNCH] Port 8080 未偵測到既有前端服務，由測試架啟動 LAH-FE (mode=${feMode}, Port 8080)...`)
     const pid = spawnDetached(process.execPath, nuxtArgs, FE_DIR, 'lah-fe')
     state.spawnedPids.fe = pid
+    state.spawnedByUs.fe = true
   }
 
   // 4. Headless Chrome CDP (:9222)
   const p9222 = getListeningProcess(PORTS.CDP)
   if (p9222) {
-    console.log(`[INFO] Port 9222 (CDP) 已由程序占用 (${p9222.name}, PID ${p9222.pid})。`)
+    console.log(`[INFO] Port 9222 (CDP) 已由程序占用 (${p9222.name}, PID ${p9222.pid})，直接沿用。`)
+    if (!state.spawnedByUs.chrome) state.spawnedByUs.chrome = false
   } else {
     const chromeBin = findChromeBinary()
     if (!chromeBin) {
@@ -356,6 +376,7 @@ async function cmdLaunch (flags) {
       'about:blank'
     ], ROOT_DIR, 'chrome-cdp')
     state.spawnedPids.chrome = pid
+    state.spawnedByUs.chrome = true
   }
 
   saveState(state)
@@ -1153,21 +1174,30 @@ async function cmdCleanup () {
   console.log('=== [Cleanup] 拆除本次驗證實例與隔離測試資料（保留驗證證據） ===')
   const state = loadState()
 
-  // 1. 關閉我們啟動的 PID 與佔用 8080, 8081, 8082, 9222 的程序（嚴格保護 Port 80 非 PHP 服務如 Apache httpd）
-  for (const port of [PORTS.FE, PORTS.WS, PORTS.WS_HTTP, PORTS.CDP]) {
-    const proc = getListeningProcess(port)
-    if (proc) {
-      console.log(`[STOP] 終止 Port ${port} 程序 (${proc.name}, PID ${proc.pid})...`)
+  // 1. 僅關閉由本次驗證測試架 (control-lah.js launch) 啟動的程序；嚴格保護使用者已自行啟動之 LAH-FE (yarn dev)、lah-messenger-server 與常駐 Apache (httpd)
+  const serviceChecks = [
+    { key: 'fe', port: PORTS.FE, label: 'LAH-FE 前端開發環境' },
+    { key: 'wss', port: PORTS.WS, label: 'lah-messenger-server 服務' },
+    { key: 'chrome', port: PORTS.CDP, label: 'Headless Chrome CDP' }
+  ]
+
+  for (const svc of serviceChecks) {
+    const proc = getListeningProcess(svc.port)
+    if (!proc) continue
+    if (state.spawnedByUs && state.spawnedByUs[svc.key] === true) {
+      console.log(`[STOP] 終止由測試架啟動之 Port ${svc.port} ${svc.label} (${proc.name}, PID ${proc.pid})...`)
       try {
         execFileSync('taskkill.exe', ['/PID', String(proc.pid), '/T', '/F'], { stdio: 'ignore' })
       } catch (e) {}
+    } else {
+      console.log(`[SKIP] 保留使用者已啟動之 Port ${svc.port} ${svc.label} (${proc.name}, PID ${proc.pid})。`)
     }
   }
 
   const p80 = getListeningProcess(PORTS.API)
   if (p80) {
-    if (/php/i.test(p80.name) && !state.preExistingPort80) {
-      console.log(`[STOP] 終止 Port 80 PHP 測試伺服器 (PID ${p80.pid})...`)
+    if (/php/i.test(p80.name) && state.spawnedByUs && state.spawnedByUs.api === true && !state.preExistingPort80) {
+      console.log(`[STOP] 終止由測試架啟動之 Port 80 PHP 測試伺服器 (PID ${p80.pid})...`)
       try {
         execFileSync('taskkill.exe', ['/PID', String(p80.pid), '/T', '/F'], { stdio: 'ignore' })
       } catch (e) {}
