@@ -29,11 +29,12 @@
 
 ---
 
-## 3. 核心與功能型技能總覽（30 個）
+## 3. 核心與功能型技能總覽（31 個）
 
 | 技能名稱 | 檔案路徑 | 適用情境 |
 |---|---|---|
 | `poteto-mode` | [`poteto-mode/SKILL.md`](./poteto-mode/SKILL.md) | 非瑣碎工程任務的預設總路由，內建 23 個劇本（Playbooks）與 24 項工程原則索引 |
+| `pyliu-mode` | [`pyliu-mode/SKILL.md`](./pyliu-mode/SKILL.md) | `pyliu` 個人工作模式技能：開放式需求先結構化訪談、零額外套件、雙端同步、自動執行 `verify-lah` 驗證、待人工驗收後以繁體中文完整修改歷程提交推送 |
 | `poteto-help` | [`poteto-help/SKILL.md`](./poteto-help/SKILL.md) | 查詢適合目前任務的技能、劇本或工程原則，並提供可直接使用的繁體中文提示詞 |
 | `in-your-own-words` | [`in-your-own-words/SKILL.md`](./in-your-own-words/SKILL.md) | 在動手前，要求 Agent 先用自己的話重述目標與問題核心以確認理解一致 |
 | `sharpen` | [`sharpen/SKILL.md`](./sharpen/SKILL.md) | 將模糊提示詞精煉為頂尖專家視角的問題定義，同時保留設計空間不過度限縮 |
