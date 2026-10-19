@@ -60,6 +60,7 @@
 | `show-me-your-work` | [`show-me-your-work/SKILL.md`](./show-me-your-work/SKILL.md) | 維護結構化的 TSV 決策軌跡紀錄，方便事後審查各項假設與取捨 |
 | `create-verification-skill` | [`create-verification-skill/SKILL.md`](./create-verification-skill/SKILL.md) | 為專案建立自動化行為驗證技能與功能地圖（Feature Map） |
 | `maintain-verification-skill` | [`maintain-verification-skill/SKILL.md`](./maintain-verification-skill/SKILL.md) | 當驗證技能的功能地圖與實際程式碼產生偏移時，進行校準與更新 |
+| `verify-lah` | [`verify-lah/SKILL.md`](./verify-lah/SKILL.md) | LAH 工作區專屬跨專案實機驗證技能（涵蓋 `control-lah.js` 測試架與五大核心功能地圖） |
 | `unslop` | [`unslop/SKILL.md`](./unslop/SKILL.md) | 清除文字中的 AI 罐頭語氣、空洞形容詞、過度破折號與生硬句型，使繁體中文精煉自然 |
 | `bro` | [`bro/SKILL.md`](./bro/SKILL.md) | 用最直白、零術語的台灣日常白話文重新解釋上一則技術訊息 |
 | `technical-writing` | [`technical-writing/SKILL.md`](./technical-writing/SKILL.md) | 結合 Diátaxis、Google 開發者風格與 LAH 繁中規範的技術文件、PR 與 Commit 撰寫標準 |
