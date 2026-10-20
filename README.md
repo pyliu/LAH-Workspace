@@ -222,12 +222,20 @@ sequenceDiagram
 ```
 - 安全釋放 Port 80, 8080, 8081, 8082 占用之所有 Node / PHP 背景進程。
 
+### 一鍵更新所有專案程式碼
+雙擊或終端執行根目錄的 [git-pull.bat](./git-pull.bat)：
+```cmd
+.\git-pull.bat
+```
+- 先確認根目錄本身並執行 `git pull`。
+- 依序自動掃描各子專案目錄（`LAH-API`、`LAH-FE`、`lah-messenger-server`、`lah-messenger`、`LAH-Updater`），偵測到 `.git` 儲存庫便自動執行 `git pull` 同步最新變更。
+
 ---
 
 ## 6. 跨儲存庫版控策略
 
 - **根目錄（本 Repository）**：
-  - 專門版控工作區級別之設定檔（`AGENTS.md`、`README.md`、`start_dev.bat`、`stop_dev.bat`、架構圖）。
+  - 專門版控工作區級別之設定檔（`AGENTS.md`、`README.md`、`start_dev.bat`、`stop_dev.bat`、`git-pull.bat`、架構圖）。
   - 透過 `.gitignore` 明確排除五個子專案的 Junction 連結，確保不會將子專案檔案重複納入。
 - **子專案（各獨立 Repository）**：
   - 各子專案維持獨立 Git Branch、Commit 與 Remote，由開發者或專責 Subagent 分別進行 Commit 與 Push。

@@ -70,6 +70,7 @@ flowchart TD
 #### 工作區本機開發快捷腳本（根目錄）
 - **一鍵啟動**：雙擊或終端執行 [start_dev.bat](file:///c:/Temp/workspace-lah/start_dev.bat)（自動於獨立視窗啟動 `LAH-API`、`LAH-FE`、`lah-messenger-server` 並支援自動開啟瀏覽器 `http://127.0.0.1:8080`）。
 - **一鍵關閉**：雙擊或終端執行 [stop_dev.bat](file:///c:/Temp/workspace-lah/stop_dev.bat)（安全釋放 Port 80, 8080, 8081, 8082 占用之服務進程）。
+- **一鍵更新**：雙擊或終端執行 [git-pull.bat](file:///c:/Temp/workspace-lah/git-pull.bat)（自動針對根目錄及底下所有 Git 子專案目錄依序執行 `git pull` 同步最新程式碼）。
 
 #### 1. `./LAH-API/` (後端 RESTful API 核心)
 - **環境與主要依賴**：
