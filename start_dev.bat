@@ -8,6 +8,10 @@ echo.
 
 set "ROOT=%~dp0"
 
+if exist "C:\AppServ\node\node.exe" (
+    set "PATH=C:\AppServ\node;%PATH%"
+)
+
 echo [1/4] Checking Port 80 for LAH-API...
 powershell -NoProfile -Command "$c = Get-NetTCPConnection -LocalPort 80 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1; if ($c) { $p = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue; Write-Host ('      [NOTICE] Port 80 is ALREADY in use by ' + $p.ProcessName + ' (PID ' + $p.Id + ').'); exit 1 } else { exit 0 }"
 if errorlevel 1 (
@@ -28,7 +32,7 @@ if errorlevel 1 (
     if not errorlevel 1 (
         call pm2 start "%ROOT%LAH-API\v85\ecosystem.config.js"
     ) else (
-        start "LAH-API-v85 - PHP 8.5 9085" /D "%ROOT%LAH-API\v85" "C:\Tools\php85\php-cgi.exe" -b 127.0.0.1:9085 -c "C:\Tools\php85\php.ini"
+        start "LAH-API-v85 - PHP 8.5 9085" /D "%ROOT%LAH-API\v85" "C:\AppServ\php85\php-cgi.exe" -b 127.0.0.1:9085 -c "C:\AppServ\php85\php.ini"
     )
 )
 echo.
