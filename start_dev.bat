@@ -8,7 +8,7 @@ echo.
 
 set "ROOT=%~dp0"
 
-echo [1/3] Checking Port 80 for LAH-API...
+echo [1/4] Checking Port 80 for LAH-API...
 powershell -NoProfile -Command "$c = Get-NetTCPConnection -LocalPort 80 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1; if ($c) { $p = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue; Write-Host ('      [NOTICE] Port 80 is ALREADY in use by ' + $p.ProcessName + ' (PID ' + $p.Id + ').'); exit 1 } else { exit 0 }"
 if errorlevel 1 (
     echo       Skipping LAH-API PHP server startup.
@@ -18,7 +18,22 @@ if errorlevel 1 (
 )
 echo.
 
-echo [2/3] Checking Port 8080 for LAH-FE...
+echo [2/4] Checking Port 9085 for LAH-API-v85 [PHP 8.5 FastCGI]...
+powershell -NoProfile -Command "$c = Get-NetTCPConnection -LocalPort 9085 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1; if ($c) { $p = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue; Write-Host ('      [NOTICE] Port 9085 is ALREADY in use by ' + $p.ProcessName + ' (PID ' + $p.Id + ').'); exit 1 } else { exit 0 }"
+if errorlevel 1 (
+    echo       Skipping LAH-API-v85 startup.
+) else (
+    echo       Port 9085 is available. Starting LAH-API-v85 on Port 9085...
+    where pm2 >nul 2>&1
+    if not errorlevel 1 (
+        call pm2 start "%ROOT%LAH-API\v85\ecosystem.config.js"
+    ) else (
+        start "LAH-API-v85 - PHP 8.5 9085" /D "%ROOT%LAH-API\v85" "C:\Tools\php85\php-cgi.exe" -b 127.0.0.1:9085 -c "C:\Tools\php85\php.ini"
+    )
+)
+echo.
+
+echo [3/4] Checking Port 8080 for LAH-FE...
 powershell -NoProfile -Command "$c = Get-NetTCPConnection -LocalPort 8080 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1; if ($c) { $p = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue; Write-Host ('      [NOTICE] Port 8080 is ALREADY in use by ' + $p.ProcessName + ' (PID ' + $p.Id + ').'); exit 1 } else { exit 0 }"
 if errorlevel 1 (
     echo       Skipping LAH-FE startup.
@@ -28,7 +43,7 @@ if errorlevel 1 (
 )
 echo.
 
-echo [3/3] Checking Port 8081/8082 for lah-messenger-server...
+echo [4/4] Checking Port 8081/8082 for lah-messenger-server...
 powershell -NoProfile -Command "$c = Get-NetTCPConnection -LocalPort 8081,8082 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1; if ($c) { $p = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue; Write-Host ('      [NOTICE] Port ' + $c.LocalPort + ' is ALREADY in use by ' + $p.ProcessName + ' (PID ' + $p.Id + ').'); exit 1 } else { exit 0 }"
 if errorlevel 1 (
     echo       Skipping lah-messenger-server startup.
@@ -41,6 +56,7 @@ echo.
 echo ========================================================
 echo   Services status:
 echo   - LAH-API:              http://127.0.0.1:80 [Active or Existing Apache]
+echo   - LAH-API (v85):        http://127.0.0.1/v85, fcgi://127.0.0.1:9085
 echo   - LAH-FE:               http://127.0.0.1:8080
 echo   - lah-messenger-server: ws://127.0.0.1:8081, http://127.0.0.1:8082
 echo ========================================================
