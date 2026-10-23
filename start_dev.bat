@@ -9,9 +9,8 @@ echo.
 set "ROOT=%~dp0"
 
 echo [1/3] Checking Port 80 for LAH-API...
-powershell -NoProfile -Command "if (Get-NetTCPConnection -LocalPort 80 -State Listen -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }"
+powershell -NoProfile -Command "$c = Get-NetTCPConnection -LocalPort 80 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1; if ($c) { $p = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue; Write-Host ('      [NOTICE] Port 80 is ALREADY in use by ' + $p.ProcessName + ' (PID ' + $p.Id + ').'); exit 1 } else { exit 0 }"
 if errorlevel 1 (
-    echo       [NOTICE] Port 80 is ALREADY in use [Apache/IIS service detected].
     echo       Skipping LAH-API PHP server startup.
 ) else (
     echo       Port 80 is available. Starting LAH-API on Port 80...
@@ -19,12 +18,24 @@ if errorlevel 1 (
 )
 echo.
 
-echo [2/3] Starting LAH-FE [Nuxt 2 Frontend on Port 8080]...
-start "LAH-FE - Nuxt 8080" /D "%ROOT%LAH-FE" cmd /k "yarn dev"
+echo [2/3] Checking Port 8080 for LAH-FE...
+powershell -NoProfile -Command "$c = Get-NetTCPConnection -LocalPort 8080 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1; if ($c) { $p = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue; Write-Host ('      [NOTICE] Port 8080 is ALREADY in use by ' + $p.ProcessName + ' (PID ' + $p.Id + ').'); exit 1 } else { exit 0 }"
+if errorlevel 1 (
+    echo       Skipping LAH-FE startup.
+) else (
+    echo       Port 8080 is available. Starting LAH-FE on Port 8080...
+    start "LAH-FE - Nuxt 8080" /D "%ROOT%LAH-FE" cmd /k "yarn dev"
+)
 echo.
 
-echo [3/3] Starting lah-messenger-server [WebSocket on Port 8081/8082]...
-start "lah-messenger-server - WS 8081/8082" /D "%ROOT%lah-messenger-server" cmd /k "yarn dev"
+echo [3/3] Checking Port 8081/8082 for lah-messenger-server...
+powershell -NoProfile -Command "$c = Get-NetTCPConnection -LocalPort 8081,8082 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1; if ($c) { $p = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue; Write-Host ('      [NOTICE] Port ' + $c.LocalPort + ' is ALREADY in use by ' + $p.ProcessName + ' (PID ' + $p.Id + ').'); exit 1 } else { exit 0 }"
+if errorlevel 1 (
+    echo       Skipping lah-messenger-server startup.
+) else (
+    echo       Port 8081/8082 is available. Starting lah-messenger-server on Port 8081/8082...
+    start "lah-messenger-server - WS 8081/8082" /D "%ROOT%lah-messenger-server" cmd /k "yarn dev"
+)
 echo.
 
 echo ========================================================
