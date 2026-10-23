@@ -60,7 +60,7 @@ echo.
 echo ========================================================
 echo   Services status:
 echo   - LAH-API:              http://127.0.0.1:80 [Active or Existing Apache]
-echo   - LAH-API (v85):        http://127.0.0.1/v85, fcgi://127.0.0.1:9085
+echo   - LAH-API (PHP 8.5):    http://127.0.0.1/LAH-API, fcgi://127.0.0.1:9085
 echo   - LAH-FE:               http://127.0.0.1:8080
 echo   - lah-messenger-server: ws://127.0.0.1:8081, http://127.0.0.1:8082
 echo ========================================================
