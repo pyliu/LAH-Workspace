@@ -30,9 +30,9 @@ if errorlevel 1 (
     echo       Port 9085 is available. Starting LAH-API-v85 on Port 9085...
     where pm2 >nul 2>&1
     if not errorlevel 1 (
-        call pm2 start "%ROOT%LAH-API\v85\ecosystem.config.js"
+        call pm2 start "%ROOT%LAH-API\API\ecosystem.config.js"
     ) else (
-        start "LAH-API-v85 - PHP 8.5 9085" /D "%ROOT%LAH-API\v85" "C:\AppServ\php85\php-cgi.exe" -b 127.0.0.1:9085 -c "C:\AppServ\php85\php.ini"
+        start "LAH-API-v85 - PHP 8.5 9085" /D "%ROOT%LAH-API\API" "C:\AppServ\php85\php-cgi.exe" -b 127.0.0.1:9085 -c "C:\AppServ\php85\php.ini"
     )
 )
 echo.
