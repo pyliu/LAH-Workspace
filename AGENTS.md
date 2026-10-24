@@ -53,7 +53,7 @@ flowchart TD
 > 2. `lah-messenger-server` 專注於 WebSocket 高併發雙向推播與附件處理，資料庫層採獨立 SQLite 頻道分庫架構。  
 > 3. `LAH-FE` 亦移植整合了 `lah-messenger` 即時通功能（`components/lah-messenger-*.vue` 元件群），與 `lah-messenger` 桌面端同樣透過 WebSocket 及 HTTP 與 `lah-messenger-server` 保持通訊。  
 > 4. `LAH-FE` 與 `lah-messenger` 桌面端一律透過標準協定呼叫對應伺服器，嚴格禁止直接穿透存取資料庫。  
-> 5. `LAH-Updater` 為獨立維運部署工具，負責將打包後之 `www.zip`、`LAH-NUXTJS.zip`、`node_modules.zip`、`lah-messenger-server.zip` 部署至目標伺服器並協助重啟 Apache 及 PM2 服務。
+> 5. `LAH-Updater` 為獨立維運部署工具，負責將打包後之 `www.zip` (後端 PHP7)、`LAH-API.zip` (後端 PHP8)、`LAH-NUXTJS.zip` (前端網站)、`LAH-NUXTJS-node_modules.zip` (前端核心套件)、`lah-messenger-server.zip` (即時通伺服端)、`lah-messenger-server-node_modules.zip` (即時通核心套件) 與 `node.zip` (Node.js 綠色環境) 部署至目標伺服器並協助重啟 Apache 及 PM2 服務。
 
 ### 1.2 系統邊界
 
