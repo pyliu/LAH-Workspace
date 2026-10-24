@@ -22,17 +22,17 @@ if errorlevel 1 (
 )
 echo.
 
-echo [2/4] Checking Port 9085 for LAH-API-v85 [PHP 8.5 FastCGI]...
-powershell -NoProfile -Command "$c = Get-NetTCPConnection -LocalPort 9085 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1; if ($c) { $p = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue; Write-Host ('      [NOTICE] Port 9085 is ALREADY in use by ' + $p.ProcessName + ' (PID ' + $p.Id + ').'); exit 1 } else { exit 0 }"
+echo [2/4] Checking Port 8085 for LAH-API-v85 [PHP 8.5 FastCGI]...
+powershell -NoProfile -Command "$c = Get-NetTCPConnection -LocalPort 8085 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1; if ($c) { $p = Get-Process -Id $c.OwningProcess -ErrorAction SilentlyContinue; Write-Host ('      [NOTICE] Port 8085 is ALREADY in use by ' + $p.ProcessName + ' (PID ' + $p.Id + ').'); exit 1 } else { exit 0 }"
 if errorlevel 1 (
     echo       Skipping LAH-API-v85 startup.
 ) else (
-    echo       Port 9085 is available. Starting LAH-API-v85 on Port 9085...
+    echo       Port 8085 is available. Starting LAH-API-v85 on Port 8085...
     where pm2 >nul 2>&1
     if not errorlevel 1 (
         call pm2 start "%ROOT%LAH-API\API\ecosystem.config.js"
     ) else (
-        start "LAH-API-v85 - PHP 8.5 9085" /D "%ROOT%LAH-API\API" "C:\AppServ\php85\php-cgi.exe" -b 127.0.0.1:9085 -c "C:\AppServ\php85\php.ini"
+        start "LAH-API-v85 - PHP 8.5 8085" /D "%ROOT%LAH-API\API" "C:\AppServ\php85\php-cgi.exe" -b 127.0.0.1:8085 -c "C:\AppServ\php85\php.ini"
     )
 )
 echo.
@@ -60,7 +60,7 @@ echo.
 echo ========================================================
 echo   Services status:
 echo   - LAH-API:              http://127.0.0.1:80 [Active or Existing Apache]
-echo   - LAH-API (PHP 8.5):    http://127.0.0.1/LAH-API, fcgi://127.0.0.1:9085
+echo   - LAH-API (PHP 8.5):    http://127.0.0.1/LAH-API, fcgi://127.0.0.1:8085
 echo   - LAH-FE:               http://127.0.0.1:8080
 echo   - lah-messenger-server: ws://127.0.0.1:8081, http://127.0.0.1:8082
 echo ========================================================
