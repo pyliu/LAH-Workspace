@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LAH-Workspace 全域架構與 Git 專案實作手冊</title>
+<style>
+:root, [data-theme="dark"] {
+  --bg-base: #0b0f19;
+  --bg-surface: #111827;
+  --bg-card: #161f33;
+  --bg-card-hover: #1e2942;
+  --bg-code: #090d16;
+  --text-main: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border-color: #26334d;
+  --border-highlight: #3b82f6;
+  --accent-primary: #3b82f6;
+  --accent-cyan: #06b6d4;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --accent-purple: #8b5cf6;
+  --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.45);
+  --svg-bg: #0f172a;
+  --svg-grid: rgba(148, 163, 184, 0.06);
+  --svg-node: #1e293b;
+  --svg-stroke: #475569;
+  --svg-text: #f8fafc;
+  --svg-subtext: #94a3b8;
+}
+[data-theme="light"] {
+  --bg-base: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --bg-code: #0f172a;
+  --text-main: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --border-color: #cbd5e1;
+  --border-highlight: #2563eb;
+  --accent-primary: #2563eb;
+  --accent-cyan: #0891b2;
+  --accent-emerald: #059669;
+  --accent-amber: #d97706;
+  --accent-rose: #e11d48;
+  --accent-purple: #7c3aed;
+  --shadow-card: 0 4px 15px -3px rgba(15, 23, 42, 0.08);
+  --svg-bg: #f1f5f9;
+  --svg-grid: rgba(15, 23, 42, 0.05);
+  --svg-node: #ffffff;
+  --svg-stroke: #94a3b8;
+  --svg-text: #0f172a;
+  --svg-subtext: #475569;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-family: "Microsoft JhengHei UI", "PingFang TC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body { background: var(--bg-base); color: var(--text-main); line-height: 1.65; display: flex; min-height: 100vh; overflow-x: hidden; }
+code, pre, .mono { font-family: "Cascadia Code", "Consolas", "JetBrains Mono", monospace; }
+
+/* Sidebar Navigation */
+.sidebar {
+  width: 280px;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-color);
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transition: transform 0.25s ease;
+}
+.brand {
+  padding: 20px 18px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-cyan));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.brand-title { font-size: 15px; font-weight: 700; letter-spacing: 0.3px; }
+.brand-sub { font-size: 11px; color: var(--text-muted); }
+
+.nav-search-wrap { padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
+.nav-search {
+  width: 100%;
+  background: var(--bg-base);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 8px 12px;
+  border-radius: 7px;
+  font-size: 13px;
+  outline: none;
+}
+.nav-search:focus { border-color: var(--accent-primary); }
+
+.nav-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 10px;
+  list-style: none;
+}
+.nav-group-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  padding: 10px 10px 4px;
+  font-weight: 700;
+}
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 12px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13.5px;
+  border-radius: 7px;
+  margin-bottom: 2px;
+  transition: all 0.15s;
+}
+.nav-link:hover, .nav-link.active {
+  background: rgba(59, 130, 246, 0.14);
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+.nav-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Main Content */
+.main-wrap {
+  margin-left: 280px;
+  flex: 1;
+  max-width: calc(100vw - 280px);
+  padding: 28px 42px 80px;
+}
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 22px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+.status-pills { display: flex; gap: 10px; flex-wrap: wrap; }
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+.pill-dot { width: 8px; height: 8px; border-radius: 50%; }
+.btn-group { display: flex; gap: 8px; }
+.btn {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.btn:hover { border-color: var(--accent-primary); background: var(--bg-card-hover); }
+.btn-primary { background: var(--accent-primary); color: #fff; border-color: var(--accent-primary); }
+.btn-primary:hover { opacity: 0.92; background: var(--accent-primary); }
+
+/* Hero */
+.hero {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.14), rgba(6, 182, 212, 0.08));
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 28px 32px;
+  margin-bottom: 34px;
+  box-shadow: var(--shadow-card);
+}
+.hero h1 { font-size: 26px; font-weight: 800; margin-bottom: 10px; letter-spacing: 0.2px; }
+.hero p { color: var(--text-secondary); font-size: 14.5px; max-width: 920px; }
+.hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+  gap: 14px;
+  margin-top: 22px;
+}
+.metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.metric-val { font-size: 22px; font-weight: 800; color: var(--accent-cyan); }
+.metric-lbl { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+/* Sections & Cards */
+.section { margin-bottom: 48px; scroll-margin-top: 24px; }
+.section-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.section-title {
+  font-size: 20px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-badge {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 5px;
+  background: rgba(59, 130, 246, 0.18);
+  color: var(--accent-primary);
+  font-weight: 700;
+}
+.section-desc { color: var(--text-secondary); font-size: 14px; margin-bottom: 18px; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px 22px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 18px;
+}
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 18px; }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+
+/* Interactive SVG Containers */
+.svg-box {
+  background: var(--svg-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  overflow-x: auto;
+  position: relative;
+}
+.svg-box svg { width: 100%; height: auto; display: block; margin: 0 auto; }
+.svg-node-interactive { cursor: pointer; transition: filter 0.18s, opacity 0.18s; }
+.svg-node-interactive:hover { filter: brightness(1.18) drop-shadow(0 0 8px rgba(59, 130, 246, 0.55)); }
+.svg-caption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-color);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Inspector Panel for Interactive Topology */
+.inspector-bar {
+  background: var(--bg-surface);
+  border: 1px solid var(--accent-primary);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 16px;
+}
+.inspector-bar h4 { font-size: 15px; color: var(--accent-cyan); margin-bottom: 4px; }
+.inspector-meta { font-size: 12.5px; color: var(--text-secondary); }
+
+/* Tabs */
+.tabs-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+}
+.tab-btn {
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 8px 15px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tab-btn:hover { color: var(--text-main); border-color: var(--accent-primary); }
+.tab-btn.active {
+  background: var(--accent-primary);
+  color: #fff;
+  border-color: var(--accent-primary);
+}
+
+/* Tables */
+.table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border-color); }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; background: var(--bg-card); }
+th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--border-color); }
+th { background: var(--bg-surface); color: var(--text-secondary); font-weight: 700; font-size: 12px; text-transform: uppercase; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg-card-hover); }
+
+/* Code Blocks with Copy */
+.code-block {
+  position: relative;
+  background: var(--bg-code);
+  color: #e2e8f0;
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  padding: 13px 16px;
+  font-size: 12.5px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 5px;
+  padding: 3px 9px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.copy-btn:hover { background: var(--accent-primary); color: #fff; }
+
+/* Tags / Badges */
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-right: 4px;
+}
+.tag-blue { background: rgba(59, 130, 246, 0.18); color: #60a5fa; }
+.tag-green { background: rgba(16, 185, 129, 0.18); color: #34d399; }
+.tag-amber { background: rgba(245, 158, 11, 0.18); color: #fbbf24; }
+.tag-rose { background: rgba(244, 63, 94, 0.18); color: #fb7185; }
+.tag-purple { background: rgba(139, 92, 246, 0.18); color: #c084fc; }
+
+/* Interactive Form Controls */
+.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.form-label { display: block; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 5px; }
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  background: var(--bg-base);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 7px;
+  padding: 8px 11px;
+  font-size: 13px;
+  font-family: inherit;
+}
+.form-textarea { min-height: 74px; resize: vertical; }
+
+@media (max-width: 1024px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main-wrap { margin-left: 0; max-width: 100vw; padding: 20px; }
+  .inspector-bar { grid-template-columns: 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+}
+@media print {
+  .sidebar, .btn-group { display: none !important; }
+  .main-wrap { margin-left: 0; max-width: 100%; padding: 0; }
+  .card, .svg-box { break-inside: avoid; box-shadow: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Left Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="brand-logo">LAH</div>
+    <div>
+      <div class="brand-title">LAH-Workspace</div>
+      <div class="brand-sub">地政智慧管控與即時通多專案容器</div>
+    </div>
+  </div>
+  <div class="nav-search-wrap">
+    <input type="text" id="globalSearch" class="nav-search" placeholder="搜尋專案、Port、指令或技能...">
+  </div>
+  <ul class="nav-list" id="navList">
+    <li class="nav-group-label">系統架構與視覺圖解</li>
+    <li><a href="#sec-topology" class="nav-link active"><span class="nav-dot"></span>1. 全域系統與通訊埠拓撲圖</a></li>
+    <li><a href="#sec-git-junction" class="nav-link"><span class="nav-dot"></span>2. 六大 Git 儲存庫與 Junction 容器</a></li>
+    <li><a href="#sec-dual-arch" class="nav-link"><span class="nav-dot"></span>3. 雙軌 API 與 Tauri v2 內部架構</a></li>
+    <li><a href="#sec-updater" class="nav-link"><span class="nav-dot"></span>4. LAH-Updater 打包與部署流水線</a></li>
+    <li class="nav-group-label">開發實作與日常維運</li>
+    <li><a href="#sec-repo-explorer" class="nav-link"><span class="nav-dot"></span>5. 六大 Git 專案規格與實作詳解</a></li>
+    <li><a href="#sec-dev-workflow" class="nav-link"><span class="nav-dot"></span>6. 本機啟停腳本與跨庫版控作業</a></li>
+    <li><a href="#sec-git-builder" class="nav-link"><span class="nav-dot"></span>7. 互動式 Git Commit 範本產生器</a></li>
+    <li class="nav-group-label">Agentic 協同工程體系</li>
+    <li><a href="#sec-agent-gov" class="nav-link"><span class="nav-dot"></span>8. Agent 調度與安全護欄攔截圖</a></li>
+    <li><a href="#sec-blast-sim" class="nav-link"><span class="nav-dot"></span>9. 跨專案契約與爆炸半徑模擬器</a></li>
+    <li><a href="#sec-skills" class="nav-link"><span class="nav-dot"></span>10. 54 個工程技能庫 (.agents/skills)</a></li>
+  </ul>
+  <div class="sidebar-footer">
+    <span>純原生離線版 (Zero CDN)</span>
+    <span class="mono">v2026.10</span>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<main class="main-wrap">
+  <header class="topbar">
+    <div class="status-pills">
+      <span class="pill"><span class="pill-dot" style="background:var(--accent-emerald)"></span>LAH-API MOCK=true 強制保護</span>
+      <span class="pill"><span class="pill-dot" style="background:var(--accent-primary)"></span>6 個獨立 Git Repositories</span>
+      <span class="pill"><span class="pill-dot" style="background:var(--accent-cyan)"></span>PHP 7.3 / 8.5 雙軌並行</span>
+      <span class="pill"><span class="pill-dot" style="background:var(--accent-purple)"></span>Rust Tauri v2 原生桌面與維運工具</span>
+    </div>
+    <div class="btn-group">
+      <button class="btn" id="themeToggleBtn" type="button">切換淺色/深色主題</button>
+      <button class="btn" onclick="window.print()" type="button">列印 / 匯出 PDF</button>
+    </div>
+  </header>
+
+  <!-- Hero Banner -->
+  <section class="hero">
+    <h1>LAH-Workspace 地政整合智慧管控系統 — 全域架構與 Git 實作手冊</h1>
+    <p>
+      本工作區採用「根目錄容器 + 五大 NTFS Junction 獨立子專案」之 Multi-repo 架構，串聯地政業務 REST API、智慧監控前端、高併發 WebSocket 即時通訊伺服器、Tauri v2 跨平台桌面客戶端與原生自動部署套件，並內建完整的 <code>AGENTS.md</code> 形式化架構契約與 54 個台灣繁體中文工程技能（pstack）。
+    </p>
+    <div class="hero-metrics">
+      <div class="metric-card">
+        <div class="metric-val">1 + 5 庫</div>
+        <div class="metric-lbl">根工作區與 5 大獨立 Git 子專案</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">:80 / :8085</div>
+        <div class="metric-lbl">LAH-API PHP 7.3 與 8.5 雙軌埠號</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">:8080 / :8081</div>
+        <div class="metric-lbl">LAH-FE 前端與 WSS 即時通長連線</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val">54 Skills</div>
+        <div class="metric-lbl">內建 pstack 繁中工程技能與 23 劇本</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 1: Interactive System Topology SVG -->
+  <section class="section" id="sec-topology">
+    <div class="section-hdr">
+      <div class="section-title">
+        <span>圖 1：全域系統架構與通訊埠拓撲圖（可點擊節點連動詳情）</span>
+        <span class="section-badge">Interactive SVG</span>
+      </div>
+    </div>
+    <p class="section-desc">
+      點擊圖中任一系統節點，下方檢視面板與「章節 5：六大 Git 專案規格」將自動切換至該專案的技術規格、分支、通訊埠與驗證指令。前端與桌面客戶端嚴格禁止直接穿透存取 Oracle 9i 或 SQLite 資料庫。
+    </p>
+
+    <div class="svg-box">
+      <svg viewBox="0 0 1060 540" xmlns="http://www.w3.org/2000/svg" aria-label="全域系統架構與通訊埠拓撲圖">
+        <defs>
+          <marker id="arr-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="#3b82f6"/>
+          </marker>
+          <marker id="arr-cyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="#06b6d4"/>
+          </marker>
+          <marker id="arr-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="#f59e0b"/>
+          </marker>
+          <marker id="arr-emerald" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="#10b981"/>
+          </marker>
+        </defs>
+
+        <!-- Layer Backgrounds -->
+        <rect x="20" y="18" width="760" height="135" rx="10" fill="none" stroke="#334155" stroke-dasharray="5 5"/>
+        <text x="36" y="42" fill="#60a5fa" font-size="13" font-weight="700">客戶端層 (Client Layer)</text>
+
+        <rect x="20" y="185" width="760" height="165" rx="10" fill="none" stroke="#334155" stroke-dasharray="5 5"/>
+        <text x="36" y="210" fill="#22d3ee" font-size="13" font-weight="700">服務中介層 (Service Layer)</text>
+
+        <rect x="20" y="382" width="760" height="140" rx="10" fill="none" stroke="#334155" stroke-dasharray="5 5"/>
+        <text x="36" y="407" fill="#34d399" font-size="13" font-weight="700">資料持久層 (Persistence Layer — 嚴禁客戶端直連)</text>
+
+        <rect x="805" y="18" width="235" height="504" rx="10" fill="none" stroke="#8b5cf6" stroke-dasharray="5 5"/>
+        <text x="822" y="42" fill="#c084fc" font-size="13" font-weight="700">維運與 Agent 治理層</text>
+
+        <!-- Connections -->
+        <!-- LAH-FE to LAH-API -->
+        <path d="M 190 135 L 190 220" stroke="#3b82f6" stroke-width="2.5" fill="none" marker-end="url(#arr-blue)"/>
+        <rect x="105" y="158" width="165" height="22" rx="4" fill="#0f172a" stroke="#3b82f6"/>
+        <text x="187" y="173" fill="#93c5fd" font-size="11" text-anchor="middle">HTTP REST (:80 / :8085)</text>
+
+        <!-- LAH-FE to WSS -->
+        <path d="M 310 135 L 520 220" stroke="#06b6d4" stroke-width="2.5" fill="none" marker-start="url(#arr-cyan)" marker-end="url(#arr-cyan)"/>
+        <rect x="330" y="158" width="160" height="22" rx="4" fill="#0f172a" stroke="#06b6d4"/>
+        <text x="410" y="173" fill="#67e8f9" font-size="11" text-anchor="middle">WS :8081 / 附件 :8082</text>
+
+        <!-- lah-messenger to LAH-API -->
+        <path d="M 520 135 L 290 220" stroke="#3b82f6" stroke-width="2" stroke-dasharray="4 3" fill="none" marker-end="url(#arr-blue)"/>
+
+        <!-- lah-messenger to WSS -->
+        <path d="M 610 135 L 610 220" stroke="#06b6d4" stroke-width="2.5" fill="none" marker-start="url(#arr-cyan)" marker-end="url(#arr-cyan)"/>
+        <rect x="530" y="158" width="165" height="22" rx="4" fill="#0f172a" stroke="#06b6d4"/>
+        <text x="612" y="173" fill="#67e8f9" font-size="11" text-anchor="middle">WS 雙向推播 / HTTP 附件</text>
+
+        <!-- LAH-API to Oracle 9i -->
+        <path d="M 185 330 L 185 422" stroke="#f59e0b" stroke-width="2.5" fill="none" marker-end="url(#arr-amber)"/>
+        <rect x="92" y="355" width="188" height="22" rx="4" fill="#0f172a" stroke="#f59e0b"/>
+        <text x="186" y="370" fill="#fcd34d" font-size="11" text-anchor="middle">OCI8 / ANSI SQL (MOCK 防護)</text>
+
+        <!-- LAH-API to SQLite -->
+        <path d="M 310 330 L 495 422" stroke="#10b981" stroke-width="2" stroke-dasharray="5 4" fill="none" marker-end="url(#arr-emerald)"/>
+        <rect x="315" y="355" width="150" height="22" rx="4" fill="#0f172a" stroke="#10b981"/>
+        <text x="390" y="370" fill="#6ee7b7" font-size="11" text-anchor="middle">本機快取讀寫 (*.db)</text>
+
+        <!-- WSS to SQLite -->
+        <path d="M 585 330 L 585 422" stroke="#10b981" stroke-width="2.5" fill="none" marker-end="url(#arr-emerald)"/>
+        <rect x="500" y="355" width="185" height="22" rx="4" fill="#0f172a" stroke="#10b981"/>
+        <text x="592" y="370" fill="#6ee7b7" font-size="11" text-anchor="middle">better-sqlite3 頻道分庫</text>
+
+        <!-- Nodes -->
+        <!-- Node: LAH-FE -->
+        <g class="svg-node-interactive" data-repo="LAH-FE" onclick="selectRepo('LAH-FE')">
+          <rect x="75" y="55" width="295" height="80" rx="9" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+          <text x="95" y="82" fill="#f8fafc" font-size="15" font-weight="700">LAH-FE 智慧管控系統前端</text>
+          <text x="95" y="103" fill="#94a3b8" font-size="12">Nuxt 2.15.8 (Vue 2) + BootstrapVue 2.23</text>
+          <text x="95" y="122" fill="#60a5fa" font-size="11.5" font-weight="600">Port :8080 | 內嵌 lah-messenger-*.vue</text>
+        </g>
+
+        <!-- Node: lah-messenger -->
+        <g class="svg-node-interactive" data-repo="lah-messenger" onclick="selectRepo('lah-messenger')">
+          <rect x="435" y="55" width="310" height="80" rx="9" fill="#1e293b" stroke="#06b6d4" stroke-width="2"/>
+          <text x="455" y="82" fill="#f8fafc" font-size="15" font-weight="700">lah-messenger 桃園即時通桌面端</text>
+          <text x="455" y="103" fill="#94a3b8" font-size="12">Rust + Tauri v2 (src-tauri/) &amp; Nuxt 2 (renderer/)</text>
+          <text x="455" y="122" fill="#22d3ee" font-size="11.5" font-weight="600">490x740 視窗硬約束 | electron-shim 相容層</text>
+        </g>
+
+        <!-- Node: LAH-API -->
+        <g class="svg-node-interactive" data-repo="LAH-API" onclick="selectRepo('LAH-API')">
+          <rect x="75" y="222" width="320" height="108" rx="9" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+          <text x="95" y="249" fill="#f8fafc" font-size="15" font-weight="700">LAH-API 後端業務核心 (雙軌並行)</text>
+          <text x="95" y="270" fill="#fcd34d" font-size="12">軌道 A (www/)：PHP 7.3/7.4 Apache Port :80</text>
+          <text x="95" y="290" fill="#38bdf8" font-size="12">軌道 B (API/)：PHP 8.5 FastCGI Port :8085</text>
+          <text x="95" y="312" fill="#34d399" font-size="11.5" font-weight="600">單一真實來源：共用 www/.env (MOCK=true)</text>
+        </g>
+
+        <!-- Node: lah-messenger-server -->
+        <g class="svg-node-interactive" data-repo="lah-messenger-server" onclick="selectRepo('lah-messenger-server')">
+          <rect x="435" y="222" width="310" height="108" rx="9" fill="#1e293b" stroke="#10b981" stroke-width="2"/>
+          <text x="455" y="249" fill="#f8fafc" font-size="15" font-weight="700">lah-messenger-server 即時通伺服器</text>
+          <text x="455" y="270" fill="#94a3b8" font-size="12">Node.js (CommonJS) + ws ^7.4.6 + Express 4</text>
+          <text x="455" y="290" fill="#6ee7b7" font-size="12">WebSocket 長連線 :8081 | 附件服務 :8082</text>
+          <text x="455" y="312" fill="#34d399" font-size="11.5" font-weight="600">毫秒級直達廣播 + 多裝置 .filter() 同步</text>
+        </g>
+
+        <!-- Storage Nodes -->
+        <g>
+          <rect x="75" y="424" width="260" height="82" rx="9" fill="#172033" stroke="#f59e0b" stroke-width="1.8"/>
+          <text x="95" y="452" fill="#fcd34d" font-size="14.5" font-weight="700">Oracle 9i 地政核心業務資料庫</text>
+          <text x="95" y="473" fill="#94a3b8" font-size="12">僅由 LAH-API 透過 OCI / ANSI SQL 存取</text>
+          <text x="95" y="492" fill="#fb7185" font-size="11.5" font-weight="700">紅線：嚴禁自動 DROP / TRUNCATE / ALTER</text>
+        </g>
+
+        <g>
+          <rect x="435" y="424" width="310" height="82" rx="9" fill="#172033" stroke="#10b981" stroke-width="1.8"/>
+          <text x="455" y="452" fill="#6ee7b7" font-size="14.5" font-weight="700">SQLite 3 本機快取與訊息頻道分庫</text>
+          <text x="455" y="473" fill="#94a3b8" font-size="12">API 快取：www/assets/db/*.db</text>
+          <text x="455" y="492" fill="#94a3b8" font-size="12">WSS 分庫：db/&lt;channel&gt;.db + dimension/</text>
+        </g>
+
+        <!-- Right Column: Root Workspace & LAH-Updater -->
+        <g class="svg-node-interactive" data-repo="ROOT" onclick="selectRepo('ROOT')">
+          <rect x="822" y="62" width="202" height="190" rx="9" fill="#1e293b" stroke="#8b5cf6" stroke-width="2"/>
+          <text x="838" y="90" fill="#c084fc" font-size="14.5" font-weight="700">LAH-Workspace (根容器)</text>
+          <text x="838" y="114" fill="#e2e8f0" font-size="12">• AGENTS.md 全域架構契約</text>
+          <text x="838" y="136" fill="#e2e8f0" font-size="12">• .agents/skills/ (54 技能)</text>
+          <text x="838" y="158" fill="#e2e8f0" font-size="12">• start_dev.bat 一鍵啟動</text>
+          <text x="838" y="180" fill="#e2e8f0" font-size="12">• stop_dev.bat 安全釋放</text>
+          <text x="838" y="202" fill="#e2e8f0" font-size="12">• git-pull.bat 六庫同步</text>
+          <text x="838" y="230" fill="#a78bfa" font-size="11.5" font-weight="600">點擊檢視根儲存庫規格</text>
+        </g>
+
+        <g class="svg-node-interactive" data-repo="LAH-Updater" onclick="selectRepo('LAH-Updater')">
+          <rect x="822" y="280" width="202" height="225" rx="9" fill="#1e293b" stroke="#ec4899" stroke-width="2"/>
+          <text x="838" y="308" fill="#f472b6" font-size="14.5" font-weight="700">LAH-Updater 部署工具</text>
+          <text x="838" y="330" fill="#94a3b8" font-size="11.5">Rust + Tauri 2 + 純靜態 UI</text>
+          <text x="838" y="354" fill="#e2e8f0" font-size="12">1. updater (5 階段自動更新)</text>
+          <text x="838" y="376" fill="#e2e8f0" font-size="12">2. backuper (備份與還原)</text>
+          <text x="838" y="398" fill="#e2e8f0" font-size="12">3. uninstaller (深度移除)</text>
+          <text x="838" y="420" fill="#e2e8f0" font-size="12">4. pack.py (零依賴全系統打包)</text>
+          <text x="838" y="452" fill="#f9a8d4" font-size="11.5">控制 Apache24 與 PM2 重啟</text>
+          <text x="838" y="482" fill="#f472b6" font-size="11.5" font-weight="600">點擊檢視打包與部署規格</text>
+        </g>
+      </svg>
+      <div class="svg-caption">
+        <span>提示：點擊上方任一專案方塊，可即時更新下方檢視器並同步切換「章節 5」頁籤。</span>
+        <span>系統邊界鐵律：前端 (LAH-FE) 與桌面端 (lah-messenger) 嚴禁繞過服務層直連資料庫。</span>
+      </div>
+    </div>
+
+    <!-- Dynamic Node Inspector -->
+    <div class="inspector-bar" id="topologyInspector">
+      <div>
+        <h4 id="inspTitle">LAH-API（後端 RESTful API 核心 — 雙軌並行）</h4>
+        <div class="inspector-meta" id="inspDesc">唯一負責對接 Oracle 9i 地政核心資料庫之樞紐，同時維護 `./www/` (PHP 7.3/7.4) 與 `./API/` (PHP 8.5 FastCGI) 雙軌道。</div>
+      </div>
+      <div>
+        <div class="form-label">Git 儲存庫與分支</div>
+        <div class="inspector-meta mono" id="inspGit">branch: master | git@github.com:pyliu/LAH-API.git</div>
+        <div class="form-label" style="margin-top:8px;">監聽埠與關鍵路徑</div>
+        <div class="inspector-meta mono" id="inspPort">Port :80 (/api/*) &amp; Port :8085 (/LAH-API/v1/*)</div>
+      </div>
+      <div>
+        <div class="form-label">快速驗證與啟動指令</div>
+        <div class="inspector-meta mono" id="inspCmd">php -l www/class/System.class.php</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: Git Multi-Repo & NTFS Junction Diagram -->
+  <section class="section" id="sec-git-junction">
+    <div class="section-hdr">
+      <div class="section-title">
+        <span>圖 2：根目錄與五大獨立 Git Junction 容器版控結構圖</span>
+        <span class="section-badge">Multi-Repo Architecture</span>
+      </div>
+    </div>
+    <p class="section-desc">
+      工作區根目錄（<code>d:\DEV\lah-workspace</code>）本身是一個輕量級 Git 儲存庫，透過 <code>.gitignore</code> 明確排除五個子專案目錄，並以 Windows NTFS Junction（<code>Mode: l----</code>）掛載五個平級獨立 Git 儲存庫。執行任何 Git 指令前，務必確認目前工作目錄位於正確的儲存庫。
+    </p>
+
+    <div class="svg-box">
+      <svg viewBox="0 0 1040 340" xmlns="http://www.w3.org/2000/svg" aria-label="六大獨立 Git 儲存庫與 Junction 結構圖">
+        <!-- Root Repo Container -->
+        <rect x="25" y="30" width="310" height="280" rx="10" fill="#1e293b" stroke="#8b5cf6" stroke-width="2.2"/>
+        <rect x="25" y="30" width="310" height="38" rx="10" fill="#2e1065"/>
+        <text x="42" y="54" fill="#e9d5ff" font-size="14" font-weight="700">根目錄 Repo: LAH-Workspace (main)</text>
+        <text x="42" y="88" fill="#cbd5e1" font-size="12.5" font-family="Consolas, monospace">├── AGENTS.md (全域架構契約)</text>
+        <text x="42" y="112" fill="#cbd5e1" font-size="12.5" font-family="Consolas, monospace">├── README.md / README.html</text>
+        <text x="42" y="136" fill="#cbd5e1" font-size="12.5" font-family="Consolas, monospace">├── .agents/skills/ (54 個工程技能)</text>
+        <text x="42" y="160" fill="#cbd5e1" font-size="12.5" font-family="Consolas, monospace">├── start_dev.bat / stop_dev.bat</text>
+        <text x="42" y="184" fill="#cbd5e1" font-size="12.5" font-family="Consolas, monospace">├── git-pull.bat (跨庫自動拉取)</text>
+        <text x="42" y="208" fill="#fb7185" font-size="12.5" font-family="Consolas, monospace">└── .gitignore (排除 5 個子專案目錄)</text>
+        <rect x="42" y="232" width="276" height="60" rx="6" fill="#0f172a" stroke="#475569"/>
+        <text x="54" y="254" fill="#a78bfa" font-size="11.5" font-weight="700">版控隔離原則：</text>
+        <text x="54" y="274" fill="#94a3b8" font-size="11.5">根目錄不追蹤子專案程式碼，防止巢狀 Git 衝突</text>
+
+        <!-- Junction Lines -->
+        <path d="M 335 75 L 445 48" stroke="#38bdf8" stroke-width="2" stroke-dasharray="5 3" fill="none"/>
+        <path d="M 335 120 L 445 108" stroke="#38bdf8" stroke-width="2" stroke-dasharray="5 3" fill="none"/>
+        <path d="M 335 165 L 445 168" stroke="#38bdf8" stroke-width="2" stroke-dasharray="5 3" fill="none"/>
+        <path d="M 335 210 L 445 228" stroke="#38bdf8" stroke-width="2" stroke-dasharray="5 3" fill="none"/>
+        <path d="M 335 255 L 445 288" stroke="#38bdf8" stroke-width="2" stroke-dasharray="5 3" fill="none"/>
+
+        <rect x="348" y="148" width="88" height="26" rx="5" fill="#0f172a" stroke="#38bdf8"/>
+        <text x="392" y="165" fill="#38bdf8" font-size="11" font-weight="700" text-anchor="middle">NTFS Junction</text>
+
+        <!-- 5 Sub-repos -->
+        <g transform="translate(445, 22)">
+          <rect width="565" height="48" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="1.8"/>
+          <text x="16" y="22" fill="#fcd34d" font-size="13.5" font-weight="700">1. ./LAH-API/ (.git 獨立版控)</text>
+          <text x="275" y="22" fill="#e2e8f0" font-size="12" font-family="Consolas, monospace">branch: master | origin: pyliu/LAH-API.git</text>
+          <text x="16" y="40" fill="#94a3b8" font-size="11.5">雙軌目錄：www/ (PHP 7.3) + API/ (PHP 8.5 FastCGI) | 共用 www/.env</text>
+        </g>
+
+        <g transform="translate(445, 82)">
+          <rect width="565" height="48" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="1.8"/>
+          <text x="16" y="22" fill="#60a5fa" font-size="13.5" font-weight="700">2. ./LAH-FE/ (.git 獨立版控)</text>
+          <text x="275" y="22" fill="#e2e8f0" font-size="12" font-family="Consolas, monospace">branch: master | origin: pyliu/LAH-FE.git</text>
+          <text x="16" y="40" fill="#94a3b8" font-size="11.5">Nuxt 2.15.8 + BootstrapVue 2.23 | 內建移植版 lah-messenger-*.vue 即時通元件群</text>
+        </g>
+
+        <g transform="translate(445, 142)">
+          <rect width="565" height="48" rx="8" fill="#1e293b" stroke="#10b981" stroke-width="1.8"/>
+          <text x="16" y="22" fill="#34d399" font-size="13.5" font-weight="700">3. ./lah-messenger-server/ (.git 獨立版控)</text>
+          <text x="315" y="22" fill="#e2e8f0" font-size="12" font-family="Consolas, monospace">branch: main | origin: pyliu/lah-messenger-server.git</text>
+          <text x="16" y="40" fill="#94a3b8" font-size="11.5">Node.js CommonJS + ws + Express + better-sqlite3 頻道分庫 (db/&lt;channel&gt;.db)</text>
+        </g>
+
+        <g transform="translate(445, 202)">
+          <rect width="565" height="48" rx="8" fill="#1e293b" stroke="#06b6d4" stroke-width="1.8"/>
+          <text x="16" y="22" fill="#22d3ee" font-size="13.5" font-weight="700">4. ./lah-messenger/ (.git 獨立版控)</text>
+          <text x="285" y="22" fill="#e2e8f0" font-size="12" font-family="Consolas, monospace">branch: main | origin: pyliu/lah-messenger.git</text>
+          <text x="16" y="40" fill="#94a3b8" font-size="11.5">Rust + Tauri v2 (src-tauri/) + Nuxt 2 (renderer/) + electron-shim.js 橋接層</text>
+        </g>
+
+        <g transform="translate(445, 262)">
+          <rect width="565" height="48" rx="8" fill="#1e293b" stroke="#ec4899" stroke-width="1.8"/>
+          <text x="16" y="22" fill="#f472b6" font-size="13.5" font-weight="700">5. ./LAH-Updater/ (.git 獨立版控)</text>
+          <text x="285" y="22" fill="#e2e8f0" font-size="12" font-family="Consolas, monospace">branch: main | origin: pyliu/LAH-Updater.git</text>
+          <text x="16" y="40" fill="#94a3b8" font-size="11.5">Tauri 2 (Rust) 維運三件套 (updater / backuper / uninstaller) + Python pack.py</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Section 3: Dual-Track LAH-API & Tauri v2 IPC Architecture -->
+  <section class="section" id="sec-dual-arch">
+    <div class="section-hdr">
+      <div class="section-title">
+        <span>圖 3：LAH-API 雙軌並行與 lah-messenger (Tauri v2 IPC) 內部架構圖</span>
+        <span class="section-badge">Deep Dive SVG</span>
+      </div>
+    </div>
+    <p class="section-desc">
+      左圖展示 <code>LAH-API</code> 如何透過 Apache 2.4 分流 PHP 7.3 生產軌道與 PHP 8.5 FastCGI 現代化軌道並共享單一真實資料源；右圖展示 <code>lah-messenger</code> 如何透過 <code>electron-shim.js</code> 讓既有 Vue 2 元件零修改無縫運行於 Rust Tauri v2 核心之上。
+    </p>
+
+    <div class="grid-2">
+      <!-- Left Diagram: LAH-API Dual Track -->
+      <div class="svg-box">
+        <svg viewBox="0 0 500 370" xmlns="http://www.w3.org/2000/svg" aria-label="LAH-API 雙軌並行架構圖">
+          <text x="16" y="26" fill="#fcd34d" font-size="14" font-weight="700">3A. LAH-API 雙軌並行與雙向業務同步鐵律</text>
+
+          <rect x="130" y="45" width="240" height="46" rx="7" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+          <text x="250" y="67" fill="#f8fafc" font-size="13" font-weight="700" text-anchor="middle">Apache 2.4 分流閘道 (Port :80)</text>
+          <text x="250" y="83" fill="#94a3b8" font-size="11" text-anchor="middle">C:\AppServ\Apache24</text>
+
+          <path d="M 190 91 L 125 135" stroke="#f59e0b" stroke-width="2" fill="none" marker-end="url(#arr-amber)"/>
+          <path d="M 310 91 L 375 135" stroke="#06b6d4" stroke-width="2" fill="none" marker-end="url(#arr-cyan)"/>
+
+          <!-- Track A: www/ -->
+          <rect x="20" y="138" width="205" height="96" rx="8" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+          <text x="34" y="160" fill="#fcd34d" font-size="13" font-weight="700">軌道 A：./www/ (PHP 7.3)</text>
+          <text x="34" y="180" fill="#cbd5e1" font-size="11.5">• 路由：/api/*.php</text>
+          <text x="34" y="198" fill="#cbd5e1" font-size="11.5">• 嚴禁 PHP 7.4+ / 8.x 語法</text>
+          <text x="34" y="216" fill="#cbd5e1" font-size="11.5">• 原生載入 OCI8 模組</text>
+
+          <!-- Track B: API/ -->
+          <rect x="275" y="138" width="205" height="96" rx="8" fill="#1e293b" stroke="#06b6d4" stroke-width="2"/>
+          <text x="289" y="160" fill="#22d3ee" font-size="13" font-weight="700">軌道 B：./API/ (PHP 8.5)</text>
+          <text x="289" y="180" fill="#cbd5e1" font-size="11.5">• 路由：/LAH-API/v1/*.php</text>
+          <text x="289" y="198" fill="#cbd5e1" font-size="11.5">• PM2 FastCGI (:8085)</text>
+          <text x="289" y="216" fill="#cbd5e1" font-size="11.5">• 雙模橋接 PHP 7 CLI OCI8</text>
+
+          <!-- Bi-directional sync badge -->
+          <path d="M 225 186 L 275 186" stroke="#f43f5e" stroke-width="2.2" stroke-dasharray="3 2"/>
+          <rect x="208" y="242" width="84" height="22" rx="4" fill="#881337"/>
+          <text x="250" y="257" fill="#fecdd3" font-size="10.5" font-weight="700" text-anchor="middle">雙軌同步更新</text>
+
+          <!-- Single Source of Truth -->
+          <rect x="30" y="276" width="440" height="76" rx="8" fill="#172033" stroke="#10b981" stroke-width="1.8"/>
+          <text x="250" y="299" fill="#34d399" font-size="13" font-weight="700" text-anchor="middle">共用單一真實來源 (Single Source of Truth)</text>
+          <text x="250" y="320" fill="#e2e8f0" font-size="11.5" text-anchor="middle">唯一設定檔：www/.env (強制 MOCK=true) | 共用快取：www/assets/db/*.db</text>
+          <text x="250" y="339" fill="#fb7185" font-size="11" text-anchor="middle">嚴禁在 API/ 下建立獨立 .env 或複製 SQLite 資料庫檔案</text>
+        </svg>
+      </div>
+
+      <!-- Right Diagram: lah-messenger Tauri v2 + Nuxt 2 IPC -->
+      <div class="svg-box">
+        <svg viewBox="0 0 500 370" xmlns="http://www.w3.org/2000/svg" aria-label="lah-messenger Tauri v2 IPC 橋接架構圖">
+          <text x="16" y="26" fill="#22d3ee" font-size="14" font-weight="700">3B. lah-messenger (Rust Tauri v2 + Nuxt 2 IPC 架構)</text>
+
+          <!-- Renderer Layer -->
+          <rect x="25" y="45" width="450" height="92" rx="8" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+          <text x="42" y="69" fill="#60a5fa" font-size="13" font-weight="700">前端渲染層：renderer/ (Nuxt 2.15.8 + Vue 2 + BootstrapVue)</text>
+          <text x="42" y="90" fill="#cbd5e1" font-size="11.5">• 容器：pages/home.vue (&lt;600 行) + 19 個獨立子元件 (home-login.vue 等)</text>
+          <text x="42" y="109" fill="#cbd5e1" font-size="11.5">• 6 大專責 Mixins：home-ws / home-auth / home-desktop / home-input 等</text>
+          <text x="42" y="126" fill="#93c5fd" font-size="11">沿用既有 this.$electron.ipcRenderer.invoke(channel, payload) 呼叫習慣</text>
+
+          <path d="M 250 137 L 250 168" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#arr-cyan)"/>
+
+          <!-- Shim Layer -->
+          <rect x="55" y="170" width="390" height="58" rx="8" fill="#0f172a" stroke="#a855f7" stroke-width="2"/>
+          <text x="250" y="194" fill="#c084fc" font-size="13" font-weight="700" text-anchor="middle">IPC 透明橋接層：renderer/plugins/electron-shim.js</text>
+          <text x="250" y="214" fill="#e2e8f0" font-size="11.5" text-anchor="middle">將 ipcRenderer.invoke / on 100% 映射至 Tauri v2 invoke &amp; listen</text>
+
+          <path d="M 250 228 L 250 258" stroke="#10b981" stroke-width="2.5" fill="none" marker-end="url(#arr-emerald)"/>
+
+          <!-- Rust System Layer -->
+          <rect x="25" y="260" width="450" height="92" rx="8" fill="#1e293b" stroke="#10b981" stroke-width="2"/>
+          <text x="42" y="284" fill="#34d399" font-size="13" font-weight="700">原生系統層：src-tauri/ (Rust 2021 + Tauri v2 + Tokio Async)</text>
+          <text x="42" y="304" fill="#cbd5e1" font-size="11.5">• 14 個相容 Commands：ad_user_query (ldap3)、get_userinfo、open_explorer 等</text>
+          <text x="42" y="322" fill="#cbd5e1" font-size="11.5">• 視窗硬約束：490x740 鎖定尺寸 | CloseRequested 攔截隱藏至系統匣 (Tray)</text>
+          <text x="42" y="340" fill="#fcd34d" font-size="11">安全護欄：禁用非必要 unsafe | Single Instance 單一實例喚醒置頂</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: LAH-Updater Pipeline SVG -->
+  <section class="section" id="sec-updater">
+    <div class="section-hdr">
+      <div class="section-title">
+        <span>圖 4：LAH-Updater 原始碼打包與目標伺服器 5 階段自動更新流水線</span>
+        <span class="section-badge">Deployment Pipeline SVG</span>
+      </div>
+    </div>
+    <p class="section-desc">
+      <code>LAH-Updater</code> 由一個零外部依賴的 Python 打包腳本（<code>pack/pack.py</code>）與三個 Rust + Tauri 2 靜態編譯原生工具（<code>updater</code>、<code>backuper</code>、<code>uninstaller</code>，執行檔體積僅 9~12 MB，冷啟動 &lt;0.3 秒）組成，負責將開發工作區產物安全部署至各地政事務所伺服器。
+    </p>
+
+    <div class="svg-box">
+      <svg viewBox="0 0 1040 270" xmlns="http://www.w3.org/2000/svg" aria-label="LAH-Updater 打包與部署流水線圖">
+        <!-- Step 1: pack.py -->
+        <rect x="20" y="30" width="220" height="210" rx="9" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+        <text x="36" y="58" fill="#60a5fa" font-size="14" font-weight="700">1. 原始碼打包 (pack.py)</text>
+        <text x="36" y="80" fill="#94a3b8" font-size="11.5">Python 3.10+ 標準庫</text>
+        <text x="36" y="106" fill="#e2e8f0" font-size="12">• 掃描各子專案原始碼</text>
+        <text x="36" y="128" fill="#e2e8f0" font-size="12">• 排除開發快取與敏感檔</text>
+        <text x="36" y="150" fill="#e2e8f0" font-size="12">• 產出標準化 .zip 更新包</text>
+        <text x="36" y="182" fill="#93c5fd" font-size="11" font-family="Consolas, monospace">python pack/pack.py</text>
+        <text x="36" y="202" fill="#93c5fd" font-size="11">或：打包智慧控管及監控系統.bat</text>
+
+        <path d="M 240 135 L 285 135" stroke="#3b82f6" stroke-width="2.5" fill="none" marker-end="url(#arr-blue)"/>
+
+        <!-- Step 2: Zip Packages Classification -->
+        <rect x="288" y="30" width="255" height="210" rx="9" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+        <text x="304" y="58" fill="#fcd34d" font-size="14" font-weight="700">2. 分類目錄優先探測機制</text>
+        <text x="304" y="84" fill="#38bdf8" font-size="12" font-weight="600">base/ (基礎環境包)</text>
+        <text x="304" y="102" fill="#cbd5e1" font-size="11" font-family="Consolas, monospace">Apache24.zip, php7/85.zip, node.zip</text>
+        <text x="304" y="128" fill="#34d399" font-size="12" font-weight="600">patch/ (業務程式包 + 更新說明)</text>
+        <text x="304" y="146" fill="#cbd5e1" font-size="11" font-family="Consolas, monospace">www.zip, LAH-API.zip, LAH-NUXTJS.zip,</text>
+        <text x="304" y="162" fill="#cbd5e1" font-size="11" font-family="Consolas, monospace">lah-messenger-server.zip</text>
+        <text x="304" y="188" fill="#c084fc" font-size="12" font-weight="600">node_modules/ (核心依賴包)</text>
+        <text x="304" y="206" fill="#cbd5e1" font-size="11" font-family="Consolas, monospace">*-node_modules.zip (支援平滑回退搜尋)</text>
+
+        <path d="M 543 135 L 588 135" stroke="#f59e0b" stroke-width="2.5" fill="none" marker-end="url(#arr-amber)"/>
+
+        <!-- Step 3: Tauri 2 Trio -->
+        <rect x="590" y="30" width="430" height="210" rx="9" fill="#1e293b" stroke="#10b981" stroke-width="2"/>
+        <text x="608" y="58" fill="#34d399" font-size="14" font-weight="700">3. Tauri 2 (Rust) 原生維運三件套 (輸出於 dist/)</text>
+
+        <rect x="608" y="74" width="394" height="44" rx="6" fill="#0f172a" stroke="#334155"/>
+        <text x="620" y="94" fill="#6ee7b7" font-size="12.5" font-weight="700">updater（自動更新工具）</text>
+        <text x="620" y="110" fill="#94a3b8" font-size="11">5 階段更新 + detect_strip_prefix 防雙層目錄 + 內嵌 WinSW 服務控制</text>
+
+        <rect x="608" y="126" width="394" height="44" rx="6" fill="#0f172a" stroke="#334155"/>
+        <text x="620" y="146" fill="#38bdf8" font-size="12.5" font-weight="700">backuper（備份與還原工具）</text>
+        <text x="620" y="162" fill="#94a3b8" font-size="11">重要設定與資料庫備份、OCI8/MSSQL DLL 掃描、復原點 Undo 機制</text>
+
+        <rect x="608" y="178" width="394" height="44" rx="6" fill="#0f172a" stroke="#334155"/>
+        <text x="620" y="198" fill="#fb7185" font-size="12.5" font-weight="700">uninstaller（自動移除工具）</text>
+        <text x="620" y="214" fill="#94a3b8" font-size="11">Apache/PM2 服務停止與移除、行程終止、環境變數 PATH 與排程深度清理</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Section 5: Interactive 6-Repo Explorer -->
+  <section class="section" id="sec-repo-explorer">
+    <div class="section-hdr">
+      <div class="section-title">
+        <span>5. 六大 Git 儲存庫實作規格與維護指南</span>
+        <span class="section-badge">Interactive Tabs</span>
+      </div>
+    </div>
+    <p class="section-desc">
+      切換下方頁籤（或點擊上方圖 1 節點）檢視各儲存庫的目錄結構、核心依賴、語法紅線、常用開發與測試指令。
+    </p>
+
+    <div class="tabs-nav" id="repoTabsNav"></div>
+    <div class="card" id="repoDetailCard"></div>
+
+    <div class="table-wrap" style="margin-top:18px;">
+      <table>
+        <thead>
+          <tr>
+            <th>儲存庫目錄</th>
+            <th>預設分支</th>
+            <th>遠端 Origin</th>
+            <th>核心執行期與框架</th>
+            <th>監聽埠號</th>
+            <th>語法與驗證指令</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code class="mono">. (LAH-Workspace)</code></td>
+            <td><span class="tag tag-purple">main</span></td>
+            <td><code class="mono">git@github.com:pyliu/LAH-Workspace.git</code></td>
+            <td>PowerShell / Batch / 54 Agent Skills</td>
+            <td>無 (統籌腳本)</td>
+            <td><code class="mono">git status</code> / <code class="mono">.\start_dev.bat</code></td>
+          </tr>
+          <tr>
+            <td><code class="mono">./LAH-API/</code></td>
+            <td><span class="tag tag-amber">master</span></td>
+            <td><code class="mono">git@github.com:pyliu/LAH-API.git</code></td>
+            <td>PHP 7.3/7.4 (<code>www/</code>) + PHP 8.5 (<code>API/</code>), Oracle 9i, SQLite 3</td>
+            <td><code>:80</code> / <code>:8085</code></td>
+            <td><code class="mono">php -l &lt;file&gt;</code> / <code class="mono">php www/task/watchdog.php</code></td>
+          </tr>
+          <tr>
+            <td><code class="mono">./LAH-FE/</code></td>
+            <td><span class="tag tag-blue">master</span></td>
+            <td><code class="mono">git@github.com:pyliu/LAH-FE.git</code></td>
+            <td>Nuxt 2.15.8 (Vue 2 Options API), BootstrapVue 2.23, Chart.js 3.9</td>
+            <td><code>:8080</code></td>
+            <td><code class="mono">yarn dev</code> / <code class="mono">yarn lint</code> / <code class="mono">yarn build</code></td>
+          </tr>
+          <tr>
+            <td><code class="mono">./lah-messenger-server/</code></td>
+            <td><span class="tag tag-green">main</span></td>
+            <td><code class="mono">git@github.com:pyliu/lah-messenger-server.git</code></td>
+            <td>Node.js (CommonJS), <code>ws ^7.4.6</code>, Express 4, <code>better-sqlite3</code></td>
+            <td><code>:8081</code> (WS) / <code>:8082</code> (HTTP)</td>
+            <td><code class="mono">node -c server.js</code> / <code class="mono">npm run dev</code></td>
+          </tr>
+          <tr>
+            <td><code class="mono">./lah-messenger/</code></td>
+            <td><span class="tag tag-blue">main</span></td>
+            <td><code class="mono">git@github.com:pyliu/lah-messenger.git</code></td>
+            <td>Rust 2021 + Tauri v2 (<code>src-tauri/</code>), Nuxt 2 (<code>renderer/</code>)</td>
+            <td>桌面 IPC / 開發埠</td>
+            <td><code class="mono">cargo check --manifest-path src-tauri/Cargo.toml</code></td>
+          </tr>
+          <tr>
+            <td><code class="mono">./LAH-Updater/</code></td>
+            <td><span class="tag tag-rose">main</span></td>
+            <td><code class="mono">git@github.com:pyliu/LAH-Updater.git</code></td>
+            <td>Tauri 2 (Rust) + 純靜態 HTML/JS, Python 3.10+ (<code>pack.py</code>)</td>
+            <td>本機原生執行檔</td>
+            <td><code class="mono">python pack/pack.py</code> / <code class="mono">python updater/build.py</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Section 6: Local Dev Startup & Stop Workflow SVG -->
+  <section class="section" id="sec-dev-workflow">
+    <div class="section-hdr">
+      <div class="section-title">
+        <span>圖 5：本機開發啟停腳本與跨庫同步作業流程圖</span>
+        <span class="section-badge">Operational Workflow SVG</span>
+      </div>
+    </div>
+    <p class="section-desc">
+      根目錄提供三支自動化批次腳本，具備通訊埠佔用偵測與 PM2 / Apache24 系統服務保護機制，避免誤殺正式常駐服務。
+    </p>
+
+    <div class="svg-box">
+      <svg viewBox="0 0 1040 250" xmlns="http://www.w3.org/2000/svg" aria-label="本機開發啟停與跨庫更新流程圖">
+        <!-- Box 1: git-pull.bat -->
+        <rect x="20" y="25" width="305" height="200" rx="9" fill="#1e293b" stroke="#8b5cf6" stroke-width="2"/>
+        <text x="38" y="54" fill="#c084fc" font-size="14.5" font-weight="700">步驟 A：一鍵同步 (git-pull.bat)</text>
+        <text x="38" y="80" fill="#e2e8f0" font-size="12">1. 檢查根目錄 .git 並執行 git pull</text>
+        <text x="38" y="104" fill="#e2e8f0" font-size="12">2. 迴圈掃描底下所有子目錄</text>
+        <text x="38" y="128" fill="#e2e8f0" font-size="12">3. 偵測到 &lt;Dir&gt;\.git 即自動執行：</text>
+        <text x="48" y="150" fill="#a78bfa" font-size="11.5" font-family="Consolas, monospace">git -C &lt;SubProject&gt; pull</text>
+        <text x="38" y="182" fill="#94a3b8" font-size="11.5">確保 6 個獨立 Git 儲存庫保持最新狀態</text>
+
+        <path d="M 325 125 L 365 125" stroke="#3b82f6" stroke-width="2.5" fill="none" marker-end="url(#arr-blue)"/>
+
+        <!-- Box 2: start_dev.bat -->
+        <rect x="368" y="25" width="335" height="200" rx="9" fill="#1e293b" stroke="#10b981" stroke-width="2"/>
+        <text x="386" y="54" fill="#34d399" font-size="14.5" font-weight="700">步驟 B：一鍵啟動 (start_dev.bat)</text>
+        <text x="386" y="80" fill="#e2e8f0" font-size="12">[1/4] 檢查 :80 → 啟動 LAH-API (www)</text>
+        <text x="386" y="102" fill="#e2e8f0" font-size="12">[2/4] 檢查 :8085 → PM2 或 php-cgi 啟動 v85</text>
+        <text x="386" y="124" fill="#e2e8f0" font-size="12">[3/4] 檢查 :8080 → 啟動 LAH-FE (yarn dev)</text>
+        <text x="386" y="146" fill="#e2e8f0" font-size="12">[4/4] 檢查 :8081/8082 → 啟動 WSS 伺服器</text>
+        <text x="386" y="176" fill="#6ee7b7" font-size="11.5" font-weight="600">若埠號已被 Apache/PM2 佔用則自動略過</text>
+        <text x="386" y="198" fill="#38bdf8" font-size="11.5">5 秒後自動開啟 http://127.0.0.1:8080</text>
+
+        <path d="M 703 125 L 743 125" stroke="#f59e0b" stroke-width="2.5" fill="none" marker-end="url(#arr-amber)"/>
+
+        <!-- Box 3: stop_dev.bat -->
+        <rect x="746" y="25" width="274" height="200" rx="9" fill="#1e293b" stroke="#f43f5e" stroke-width="2"/>
+        <text x="764" y="54" fill="#fb7185" font-size="14.5" font-weight="700">步驟 C：安全釋放 (stop_dev.bat)</text>
+        <text x="764" y="80" fill="#e2e8f0" font-size="12">掃描 Port 80, 8080, 8081, 8082, 8085</text>
+        <text x="764" y="106" fill="#fcd34d" font-size="12" font-weight="600">智慧防誤殺保護：</text>
+        <text x="764" y="128" fill="#cbd5e1" font-size="11.5">• 保留非 php 之 Port 80 (Apache24)</text>
+        <text x="764" y="150" fill="#cbd5e1" font-size="11.5">• 保留 PM2 託管之 :8081/:8082/:8085</text>
+        <text x="764" y="178" fill="#fda4af" font-size="11.5">僅強制終止臨時開發視窗行程</text>
+      </svg>
+    </div>
+
+    <div class="grid-3" style="margin-top:16px;">
+      <div class="card">
+        <div class="form-label">一鍵同步所有 Git 專案</div>
+        <div class="code-block"><button class="copy-btn" onclick="copyText('.\\git-pull.bat', this)">複製</button><code>.\git-pull.bat</code></div>
+        <p style="font-size:12.5px;color:var(--text-secondary);">自動拉取根目錄與 5 個子專案最新遠端分支。</p>
+      </div>
+      <div class="card">
+        <div class="form-label">一鍵啟動本機開發環境</div>
+        <div class="code-block"><button class="copy-btn" onclick="copyText('.\\start_dev.bat', this)">複製</button><code>.\start_dev.bat</code></div>
+        <p style="font-size:12.5px;color:var(--text-secondary);">自動偵測 Port 80 / 8085 / 8080 / 8081 並開啟瀏覽器。</p>
+      </div>
+      <div class="card">
+        <div class="form-label">一鍵釋放臨時開發行程</div>
+        <div class="code-block"><button class="copy-btn" onclick="copyText('.\\stop_dev.bat', this)">複製</button><code>.\stop_dev.bat</code></div>
+        <p style="font-size:12.5px;color:var(--text-secondary);">安全關閉臨時開發程序，保留 Apache 與 PM2 常駐服務。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 7: Interactive Git Command & Traditional Chinese Commit Builder -->
+  <section class="section" id="sec-git-builder">
+    <div class="section-hdr">
+      <div class="section-title">
+        <span>7. 互動式六大 Git 儲存庫指令與繁體中文 Commit 產生器</span>
+        <span class="section-badge">Interactive Tool</span>
+      </div>
+    </div>
+    <p class="section-desc">
+      依據 <code>AGENTS.md</code> 第 4.3 節規範，所有 Git Commit 訊息必須使用<strong>台灣繁體中文</strong>，並遵循「Conventional Commits 標題 + 修改目的 + 修改項目 + 相容性說明」三段式結構。選擇下方目標儲存庫與填寫欄位，即可自動生成完整指令序列。
+    </p>
+
+    <div class="card">
+      <div class="form-row">
+        <div>
+          <label class="form-label" for="gitRepoSel">1. 目標 Git 儲存庫</label>
+          <select id="gitRepoSel" class="form-select" onchange="updateGitBuilder()">
+            <option value=".">根目錄 (LAH-Workspace) [branch: main]</option>
+            <option value="LAH-API" selected>./LAH-API [branch: master]</option>
+            <option value="LAH-FE">./LAH-FE [branch: master]</option>
+            <option value="lah-messenger-server">./lah-messenger-server [branch: main]</option>
+            <option value="lah-messenger">./lah-messenger [branch: main]</option>
+            <option value="LAH-Updater">./LAH-Updater [branch: main]</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" for="gitTypeSel">2. Commit 類型前綴</label>
+          <select id="gitTypeSel" class="form-select" onchange="updateGitBuilder()">
+            <option value="feat">feat: 新增功能</option>
+            <option value="fix">fix: 修復缺陷</option>
+            <option value="refactor">refactor: 重構（不影響外部行為）</option>
+            <option value="docs">docs: 文件更新</option>
+            <option value="perf">perf: 效能調校</option>
+            <option value="chore">chore: 建置或輔助工具變動</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" for="gitSummaryInp">3. 繁體中文標題摘要</label>
+          <input id="gitSummaryInp" type="text" class="form-input" value="同步更新使用者查詢 API 雙軌端點" oninput="updateGitBuilder()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label class="form-label" for="gitPurposeInp">4. 修改目的與背景</label>
+          <textarea id="gitPurposeInp" class="form-textarea" oninput="updateGitBuilder()">確保 PHP 7.3 (www/) 與 PHP 8.5 (API/) 雙軌端點回傳結構一致，避免前端切換軌道時發生欄位缺失。</textarea>
+        </div>
+        <div>
+          <label class="form-label" for="gitItemsInp">5. 具體修改項目與檔案清單（每行一項）</label>
+          <textarea id="gitItemsInp" class="form-textarea" oninput="updateGitBuilder()">www/api/user_json_api.php: 新增部門篩選參數檢查。
+API/v1/user_json_api.php: 同步移植部門篩選邏輯並通過 PHP 8.5 語法驗證。</textarea>
+        </div>
+        <div>
+          <label class="form-label" for="gitCompatInp">6. 介面相容性與影響範圍說明</label>
+          <textarea id="gitCompatInp" class="form-textarea" oninput="updateGitBuilder()">向下相容既有 LAH-FE 與 lah-messenger 呼叫契約，MOCK=true 維持開啟。</textarea>
+        </div>
+      </div>
+
+      <div class="form-label">自動產生之 PowerShell 驗證、提交與推送指令序列：</div>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyText(document.getElementById('gitBuilderOutput').textContent, this)">複製全部指令</button>
+        <pre id="gitBuilderOutput" class="mono"></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 8: Agentic Governance & Guardrails SVG -->
+  <section class="section" id="sec-agent-gov">
+    <div class="section-hdr">
+      <div class="section-title">
+        <span>圖 6：Master / Subagent 協同調度、規則繼承與安全護欄攔截圖</span>
+        <span class="section-badge">Agentic Engineering SVG</span>
+      </div>
+    </div>
+    <p class="section-desc">
+      面對跨五種技術棧的異質工作區，系統透過根目錄與子專案分層 <code>AGENTS.md</code> 契約，約束 Master Agent 與各專案專責 Subagent 的執行邊界與資料庫安全防線。
+    </p>
+
+    <div class="svg-box">
+      <svg viewBox="0 0 1040 320" xmlns="http://www.w3.org/2000/svg" aria-label="Master與Subagent調度及安全護欄圖">
+        <!-- Left: Master Agent -->
+        <rect x="20" y="30" width="250" height="260" rx="10" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+        <text x="38" y="60" fill="#60a5fa" font-size="15" font-weight="700">Master Agent (主控協調者)</text>
+        <text x="38" y="88" fill="#e2e8f0" font-size="12">1. 讀取根目錄 AGENTS.md 契約</text>
+        <text x="38" y="112" fill="#e2e8f0" font-size="12">2. 執行變更前檢查 (git status)</text>
+        <text x="38" y="136" fill="#34d399" font-size="12" font-weight="700">3. 強制確認 LAH-API MOCK=true</text>
+        <text x="38" y="160" fill="#e2e8f0" font-size="12">4. 評估跨專案契約 (API/WS/SQLite)</text>
+        <text x="38" y="184" fill="#e2e8f0" font-size="12">5. 透過 invoke_subagent 分派</text>
+        <text x="38" y="208" fill="#e2e8f0" font-size="12">6. 執行跨端驗證 (verify-lah)</text>
+        <text x="38" y="232" fill="#fcd34d" font-size="12">7. 產出台灣繁體中文變更矩陣表</text>
+
+        <path d="M 270 160 L 325 160" stroke="#3b82f6" stroke-width="2.5" fill="none" marker-end="url(#arr-blue)"/>
+
+        <!-- Middle: Guardrail Gate -->
+        <rect x="328" y="30" width="320" height="260" rx="10" fill="#172033" stroke="#f59e0b" stroke-width="2"/>
+        <text x="346" y="60" fill="#fcd34d" font-size="15" font-weight="700">安全護欄閘門 (Guardrails Gate)</text>
+
+        <rect x="346" y="78" width="284" height="82" rx="6" fill="#0f172a" stroke="#10b981"/>
+        <text x="358" y="99" fill="#34d399" font-size="12.5" font-weight="700">綠燈：自動授權執行 (Auto-Run)</text>
+        <text x="358" y="119" fill="#cbd5e1" font-size="11.5">• 唯讀搜尋、git status / git diff</text>
+        <text x="358" y="137" fill="#cbd5e1" font-size="11.5">• 語法檢查：php -l / node -c / cargo check</text>
+        <text x="358" y="153" fill="#cbd5e1" font-size="11.5">• 靜態檢查與測試：yarn lint / 單元測試</text>
+
+        <rect x="346" y="174" width="284" height="98" rx="6" fill="#0f172a" stroke="#f43f5e"/>
+        <text x="358" y="195" fill="#fb7185" font-size="12.5" font-weight="700">紅燈：必須取得人工授權 (Human Gate)</text>
+        <text x="358" y="215" fill="#fecdd3" font-size="11.5">• 嚴禁關閉 MOCK=true 或修改 .env</text>
+        <text x="358" y="233" fill="#fecdd3" font-size="11.5">• 嚴禁對 Oracle 執行 DROP/TRUNCATE/ALTER</text>
+        <text x="358" y="251" fill="#fecdd3" font-size="11.5">• 套件安裝 (npm/composer) 與正式打包發布</text>
+
+        <path d="M 648 160 L 703 160" stroke="#10b981" stroke-width="2.5" fill="none" marker-end="url(#arr-emerald)"/>
+
+        <!-- Right: Specialized Subagents -->
+        <rect x="706" y="30" width="314" height="260" rx="10" fill="#1e293b" stroke="#10b981" stroke-width="2"/>
+        <text x="724" y="60" fill="#34d399" font-size="15" font-weight="700">專責垂直子代理 (Subagents)</text>
+        <text x="724" y="88" fill="#fcd34d" font-size="12">• API Subagent：鎖定 LAH-API 雙軌同步</text>
+        <text x="724" y="116" fill="#60a5fa" font-size="12">• FE Subagent：鎖定 Nuxt 2 Options API</text>
+        <text x="724" y="144" fill="#34d399" font-size="12">• WSS Subagent：鎖定零延遲廣播與多端同步</text>
+        <text x="724" y="172" fill="#22d3ee" font-size="12">• Client Subagent：鎖定 Tauri v2 + Shim</text>
+        <text x="724" y="200" fill="#f472b6" font-size="12">• Updater Subagent：鎖定 Rust 原生三件套</text>
+        <rect x="724" y="220" width="278" height="52" rx="6" fill="#0f172a" stroke="#334155"/>
+        <text x="736" y="242" fill="#94a3b8" font-size="11.5">原則：單一子代理僅修改所屬 Repository，</text>
+        <text x="736" y="260" fill="#94a3b8" font-size="11.5">完成後交由 Master 進行跨專案契約驗收。</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Section 9: Cross-Project Contract & Blast Radius Simulator -->
+  <section class="section" id="sec-blast-sim">
+    <div class="section-hdr">
+      <div class="section-title">
+        <span>9. 跨專案介面契約與爆炸半徑（Blast Radius）互動檢核模擬器</span>
+        <span class="section-badge">Interactive Simulator</span>
+      </div>
+    </div>
+    <p class="section-desc">
+      修改任一專案前，點選下方您預計異動的介面類型，模擬器將依據 <code>AGENTS.md</code> 第 2 節跨專案介面契約，列出所有受波及的儲存庫、必檢檔案與驗證步驟。
+    </p>
+
+    <div class="tabs-nav" id="blastTabsNav"></div>
+    <div class="card" id="blastResultCard"></div>
+  </section>
+
+  <!-- Section 10: 54 Engineering Skills Explorer -->
+  <section class="section" id="sec-skills">
+    <div class="section-hdr">
+      <div class="section-title">
+        <span>10. 工作區內建 54 個工程技能庫（.agents/skills/）與 23 劇本速查</span>
+        <span class="section-badge">54 Skills &amp; 23 Playbooks</span>
+      </div>
+    </div>
+    <p class="section-desc">
+      本工作區於 <code>.agents/skills/</code> 內建移植自 pstack 的 54 個工程技能（30 個功能型技能 + 24 項工程原則技能），以及 <code>poteto-mode</code> 內建的 23 個標準劇本。可透過下方分類按鈕或關鍵字即時篩選。
+    </p>
+
+    <div class="card">
+      <div class="form-row" style="align-items:end;">
+        <div>
+          <label class="form-label" for="skillFilterInput">關鍵字過濾技能名稱或用途</label>
+          <input type="text" id="skillFilterInput" class="form-input" placeholder="輸入如：verify-lah, poteto-mode, 雙軌, 原則, 審查..." oninput="renderSkillsTable()">
+        </div>
+        <div>
+          <label class="form-label">分類快篩</label>
+          <div class="btn-group" id="skillCatBtns">
+            <button class="btn btn-primary" type="button" onclick="setSkillCat('ALL', this)">全部 (56)</button>
+            <button class="btn" type="button" onclick="setSkillCat('CORE', this)">核心路由與開發 (18)</button>
+            <button class="btn" type="button" onclick="setSkillCat('VERIFY', this)">驗證與寫作 (14)</button>
+            <button class="btn" type="button" onclick="setSkillCat('PRINCIPLE', this)">工程原則 (24)</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="max-height:520px;overflow-y:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:230px;">技能名稱 (Skill ID)</th>
+              <th style="width:110px;">分類</th>
+              <th>核心職責與觸發時機</th>
+              <th style="width:240px;">檔案路徑</th>
+            </tr>
+          </thead>
+          <tbody id="skillsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+// Domain Model (Following principle-model-the-domain)
+const REPO_REGISTRY = {
+  "ROOT": {
+    id: "ROOT",
+    name: "LAH-Workspace (工作區根目錄容器)",
+    branch: "main",
+    remote: "git@github.com:pyliu/LAH-Workspace.git",
+    ports: "統籌腳本 (:80, :8085, :8080, :8081, :8082)",
+    stack: "Windows NTFS Junction + PowerShell / Batch + 54 個 Agent 技能庫",
+    desc: "管理全域設定檔、AGENTS.md 跨專案架構契約、54 個 pstack 繁中工程技能，以及本機一鍵啟停與跨庫 git pull 腳本。",
+    structure: [
+      "AGENTS.md              # 全域架構契約、系統邊界與安全紅線",
+      "README.md / README.html# 工作區架構與 Git 專案實作解說手冊",
+      ".agents/skills/        # 54 個繁體中文工程技能與 23 個 Playbooks",
+      "start_dev.bat          # 一鍵檢查 Port 並啟動 API / v85 / FE / WSS",
+      "stop_dev.bat           # 安全釋放臨時開發行程 (保留 Apache/PM2)",
+      "git-pull.bat           # 自動巡檢根目錄與 5 大子專案執行 git pull",
+      ".gitignore             # 排除 5 個子專案 Junction 避免重複追蹤"
+    ],
+    rules: [
+      "根目錄版控僅管理全域設定與文件，嚴禁將子專案程式碼混入根儲存庫。",
+      "修改跨專案功能前，必須先閱讀根目錄 AGENTS.md 與對應子專案 AGENTS.md。",
+      "所有回覆、分析報告與 Git Commit 訊息強制使用台灣繁體中文。"
+    ],
+    commands: [
+      { label: "檢查根儲存庫狀態", cmd: "git status" },
+      { label: "一鍵同步 6 大儲存庫", cmd: ".\\git-pull.bat" },
+      { label: "一鍵啟動本機開發環境", cmd: ".\\start_dev.bat" }
+    ]
+  },
+  "LAH-API": {
+    id: "LAH-API",
+    name: "LAH-API (後端業務核心 — PHP 7.3 / 8.5 雙軌並行)",
+    branch: "master",
+    remote: "git@github.com:pyliu/LAH-API.git",
+    ports: "Port :80 (/api/*) & Port :8085 (/LAH-API/v1/* FastCGI)",
+    stack: "PHP 7.3/7.4 (www/) + PHP 8.5.12 NTS (API/) + Oracle 9i (OCI8) + SQLite 3",
+    desc: "地政業務核心 RESTful API 樞紐，唯一負責對接 Oracle 9i。採用 www/ (線上生產軌道) 與 API/ (PHP 8.5 現代化軌道) 雙軌並行架構。",
+    structure: [
+      "www/                   # 線上生產軌道 (PHP 7.3/7.4, Apache Port 80)",
+      "├── .env               # 全專案唯一設定檔 (強制 MOCK=true)",
+      "├── api/*.php          # 生產環境 REST API 端點",
+      "├── include/*.class.php# 核心業務與資料庫存取類別",
+      "└── assets/db/*.db     # 雙軌共用之 SQLite 3 本機快取資料庫",
+      "API/                   # 現代化移植軌道 (PHP 8.5 FastCGI Port 8085)",
+      "├── v1/*.php           # 對應 www/api/*.php 之 PHP 8.5 端點",
+      "└── include/*.class.php# 適配 PHP 8.5 (修復 bindParam 傳址等) 之類別"
+    ],
+    rules: [
+      "強制 MOCK 模式：www/.env 中的 MOCK=true 必須維持開啟，未經人工明確授權嚴禁改為 false。",
+      "雙軌業務同步鐵律：凡修改 www/api/*.php 或 www/include/*.class.php，必須同步更新 API/ 下對應檔案。",
+      "單一真實來源：嚴禁在 API/ 下建立獨立的 .env 或複製 SQLite 資料庫檔案。",
+      "Oracle 資安紅線：嚴禁自動執行 DROP、TRUNCATE、ALTER 或無 WHERE 條件之 DELETE / UPDATE。"
+    ],
+    commands: [
+      { label: "PHP 語法檢查 (生產軌)", cmd: "cd .\\LAH-API; php -l www/class/System.class.php" },
+      { label: "PHP 8.5 語法檢查 (現代軌)", cmd: "cd .\\LAH-API; C:\\AppServ\\php85\\php.exe -l API/v1/user_json_api.php" },
+      { label: "執行排程測試驗證", cmd: "cd .\\LAH-API; php www/task/watchdog.php" }
+    ]
+  },
+  "LAH-FE": {
+    id: "LAH-FE",
+    name: "LAH-FE (智慧管控系統前端 + 內嵌即時通元件群)",
+    branch: "master",
+    remote: "git@github.com:pyliu/LAH-FE.git",
+    ports: "Port :8080 (Nuxt Dev / Start)",
+    stack: "Nuxt.js 2.15.8 (Vue 2 Options API) + BootstrapVue 2.23.0 + Chart.js 3.9",
+    desc: "提供地政智慧監控管理介面，並內嵌移植自即時通之完整元件群 (components/lah-messenger-*.vue)，同時對接 LAH-API 與 lah-messenger-server。",
+    structure: [
+      "pages/                 # Nuxt 2 路由頁面 (SSR / CSR 相容)",
+      "components/            # 業務元件與 lah-messenger-*.vue 即時通元件群",
+      "store/                 # Vuex 狀態管理模組",
+      "plugins/ & mixins/     # 全域輔助函式與共用 Mixins",
+      "nuxt.config.js         # Nuxt 2 建置與代理設定"
+    ],
+    rules: [
+      "嚴守 Vue 2 Options API 與 BootstrapVue v2，禁止擅自改用 Vue 3 / Composition API。",
+      "lah-header 規範：主標題使用 h3 級別，頂層操作按鈕與輸入框高度統一對齊 45px。",
+      "當篩選條件變更影響 b-table 資料時，必須將 currentPage 重設為 1，避免停留於空白頁。",
+      "嚴禁繞過 LAH-API 直接存取資料庫。"
+    ],
+    commands: [
+      { label: "啟動 Nuxt 開發伺服器 (:8080)", cmd: "cd .\\LAH-FE; yarn dev" },
+      { label: "執行 ESLint 檢查與自動修復", cmd: "cd .\\LAH-FE; yarn lint" },
+      { label: "正式環境建置檢查", cmd: "cd .\\LAH-FE; yarn build" }
+    ]
+  },
+  "lah-messenger-server": {
+    id: "lah-messenger-server",
+    name: "lah-messenger-server (高併發 WebSocket 即時通伺服器)",
+    branch: "main",
+    remote: "git@github.com:pyliu/lah-messenger-server.git",
+    ports: "Port :8081 (WebSocket) & Port :8082 (HTTP 附件上傳/下載)",
+    stack: "Node.js (CommonJS) + ws ^7.4.6 + Express ^4 + better-sqlite3 ^8.5.0",
+    desc: "專責維持 WebSocket 長連線、毫秒級頻道訊息廣播、私訊轉發、已讀同步與附件處理，採 SQLite 頻道分庫架構。",
+    structure: [
+      "server.js              # WebSocket 與 Express 主伺服器入口",
+      "db/<channel>.db        # 各聊天頻道獨立 SQLite 訊息資料庫",
+      "dimension/channel.db   # 頻道與群組維度管理資料庫",
+      "ecosystem.config.js    # PM2 生產環境常駐守護設定"
+    ],
+    rules: [
+      "零延遲直達廣播：訊息寫入 SQLite 成功後必須立即主動呼叫 broadcastChannelMessage，不得僅依賴 node-watch。",
+      "多端一致性：同一 User ID 可同時登入桌面端與多個網頁分頁，必須使用 .filter() 遍歷推播，嚴禁使用 .find()。",
+      "嚴禁全域互斥鎖：廣播迴圈中禁止使用全域布林鎖阻塞事件迴圈，單一連線傳送須具備獨立 try/catch。",
+      "修改後必須執行 node -c 語法檢查，防止 PM2 重啟崩潰。"
+    ],
+    commands: [
+      { label: "Node.js 語法檢查 (必跑)", cmd: "cd .\\lah-messenger-server; node -c server.js" },
+      { label: "啟動開發伺服器 (nodemon)", cmd: "cd .\\lah-messenger-server; npm run dev" },
+      { label: "啟動正式伺服器", cmd: "cd .\\lah-messenger-server; npm start" }
+    ]
+  },
+  "lah-messenger": {
+    id: "lah-messenger",
+    name: "lah-messenger (桃園即時通桌面客戶端 — Rust Tauri v2)",
+    branch: "main",
+    remote: "git@github.com:pyliu/lah-messenger.git",
+    ports: "桌面原生視窗 (490x740 硬約束)",
+    stack: "Rust 2021 + Tauri v2 (src-tauri/) + Nuxt 2.15.8 (renderer/) + electron-shim.js",
+    desc: "跨平台桌面端即時通訊應用。底層已遷移至 Rust + Tauri v2，前端沿用 Nuxt 2 並透過 electron-shim.js 保持 100% IPC 相容。",
+    structure: [
+      "src-tauri/             # Rust 核心底層 (視窗硬約束、系統匣、AD 驗證、單一實例)",
+      "renderer/              # Nuxt 2 前端渲染層",
+      "├── pages/home.vue     # 主頁面容器 (控制在 600 行以內)",
+      "├── components/        # 19 個即時通獨立子元件 (home-login.vue 等)",
+      "├── mixins/            # 6 大專責業務 Mixins (home-ws.js, home-auth.js 等)",
+      "└── plugins/electron-shim.js # 透明映射 ipcRenderer 至 Tauri invoke/listen",
+      "main/                  # 舊版 Electron 主程序對照參考 (未經要求不得更動)"
+    ],
+    rules: [
+      "視窗尺寸硬約束：鎖定 490x740，禁止縮放與最大化；點擊關閉時攔截並隱藏至系統匣 (window.hide())。",
+      "IPC 契約相容：所有 Rust Commands 必須維持與既有 Electron IPC 頻道名稱及回傳格式相容。",
+      "Rust 安全準則：禁用非必要 unsafe；AD LDAP 與網路請求必須使用 Tokio async；open_explorer 須過濾路徑引號防注入。"
+    ],
+    commands: [
+      { label: "Rust 環境診斷", cmd: "cd .\\lah-messenger; .\\setup_rust_env.ps1" },
+      { label: "Cargo 編譯與型別檢查", cmd: "cd .\\lah-messenger; cargo check --manifest-path src-tauri/Cargo.toml" }
+    ]
+  },
+  "LAH-Updater": {
+    id: "LAH-Updater",
+    name: "LAH-Updater (系統自動更新、備份、移除與全系統打包工具)",
+    branch: "main",
+    remote: "git@github.com:pyliu/LAH-Updater.git",
+    ports: "原生獨立執行檔 (輸出於 dist/)",
+    stack: "Tauri 2 (Rust) + 純靜態 HTML/JS 前端 + Python 3.10+ 標準庫 (pack/pack.py)",
+    desc: "提供各地政事務所管理師輕量、秒開 (<0.3s)、免安裝之維運三件套 (updater / backuper / uninstaller) 與原始碼打包工具。",
+    structure: [
+      "updater/               # 5 階段自動更新工具 (含 WinSW 內嵌與雙層目錄自動剝離)",
+      "backuper/              # 重要資料備份、OCI8/MSSQL DLL 掃描與復原點工具",
+      "uninstaller/           # 服務停止/移除、行程清理與環境變數深度移除工具",
+      "pack/pack.py           # 零外部依賴之 Python 全系統原始碼打包腳本",
+      "dist/                  # 編譯完成之執行檔統一輸出目錄"
+    ],
+    rules: [
+      "真實路徑定位：Rust 中必須使用 std::env::current_exe() 取得父目錄，嚴禁使用 current_dir() 避免管理員提權時落入 System32。",
+      "分類目錄優先搜尋：base/ (基礎環境)、patch/ (業務程式與更新說明)、node_modules/ (依賴套件)，未命中時自動平滑回退。",
+      "雙層同名目錄防呆：解壓時透過 detect_strip_prefix 自動剔除外層重複同名資料夾。"
+    ],
+    commands: [
+      { label: "執行全系統原始碼打包", cmd: "cd .\\LAH-Updater; python pack/pack.py" },
+      { label: "建置自動更新工具 (需授權)", cmd: "cd .\\LAH-Updater; python updater/build.py" },
+      { label: "建置自動備份工具 (需授權)", cmd: "cd .\\LAH-Updater; python backuper/build.py" }
+    ]
+  }
+};
+
+const BLAST_SCENARIOS = [
+  {
+    id: "http-api",
+    title: "情境 A：修改 LAH-API 路由、請求參數或 JSON 回傳格式",
+    contract: "HTTP RESTful API 契約 (AGENTS.md 2.1 & LAH-API/AGENTS.md 2.1)",
+    affected: ["LAH-API (www/ 與 API/ 雙軌)", "LAH-FE", "lah-messenger", "LAH-API 內部 Legacy HTML"],
+    checks: [
+      "【雙軌同步】修改 www/api/*.php 或 www/include/*.class.php 時，必須同步修改 API/v1/*.php 與 API/include/*.class.php。",
+      "【呼叫端搜尋】在 ./LAH-FE/ 與 ./lah-messenger/renderer/ 中搜尋所有呼叫該 API 路由的元件與 Vuex action。",
+      "【舊網頁檢查】檢查 ./LAH-API/www/ 內部 Legacy HTML 頁面是否直接呼叫該端點。",
+      "【雙版本語法驗證】分別執行 PHP 7.3 php -l 與 PHP 8.5 php.exe -l 確認雙軌零語法錯誤。"
+    ]
+  },
+  {
+    id: "ws-protocol",
+    title: "情境 B：修改 WebSocket 封包結構、Event Command 或附件 API",
+    contract: "WebSocket 與附件協定契約 (AGENTS.md 2.2 & lah-messenger-server/AGENTS.md)",
+    affected: ["lah-messenger-server", "lah-messenger (桌面端)", "LAH-FE (內嵌 lah-messenger-*.vue 元件群)"],
+    checks: [
+      "【封包相容】確認 type (mine / command / ack / remote)、負數 ACK ID (-1 ~ -99) 與 payload 欄位維持向下相容。",
+      "【雙客戶端同步檢查】凡修改即時通功能，必須同時檢查 ./lah-messenger/renderer/ 與 ./LAH-FE/components/lah-messenger-*.vue。",
+      "【多端推播檢查】確認伺服器端針對特定使用者推播時使用 .filter() 而非 .find()，保障桌面端與網頁端同時在線同步。",
+      "【語法與 Lint】執行 node -c server.js 與 LAH-FE 的 yarn lint。"
+    ]
+  },
+  {
+    id: "sqlite-schema",
+    title: "情境 C：修改 SQLite 資料表結構、索引或讀寫 Transaction",
+    contract: "SQLite 跨程序讀寫與單一真實來源契約 (AGENTS.md 2.3 & 3.2)",
+    affected: ["LAH-API (www/assets/db/*.db)", "lah-messenger-server (db/<channel>.db)"],
+    checks: [
+      "【禁止單邊修改】若為共用 SQLite 庫，必須同時檢查 PHP (PDO/SQLite3) 與 Node.js (better-sqlite3) 兩端的讀寫相容性。",
+      "【單一真實來源】LAH-API 的 PHP 7.3 與 PHP 8.5 軌道必須共用 www/assets/db/*.db，嚴禁在 API/ 下建立資料庫複本。",
+      "【並行鎖定防護】注意 Busy Timeout、WAL 模式與 Transaction 邊界，避免 Database Lock。",
+      "【測試隔離】本機測試應使用專用測試檔 (如 test.sqlite)，嚴禁清空或覆寫既有開發資料庫。"
+    ]
+  },
+  {
+    id: "desktop-ipc",
+    title: "情境 D：修改桌面端原生功能 (AD 驗證、系統匣、檔案開啟、視窗控制)",
+    contract: "Tauri v2 IPC Commands 與 electron-shim 橋接契約 (lah-messenger/AGENTS.md 3.2)",
+    affected: ["lah-messenger (src-tauri/)", "lah-messenger (renderer/plugins/electron-shim.js)"],
+    checks: [
+      "【IPC 名稱與簽章相容】確認 src-tauri/ 中的 Rust Command 參數結構與 electron-shim.js 的映射表一致。",
+      "【視窗約束檢查】確認視窗維持 490x740 硬約束，且 CloseRequested 正確呼叫 api.prevent_close() 並隱藏至系統匣。",
+      "【執行緒安全】確認耗時 I/O 使用 Tokio async，且路徑處理具備引號清理與合法性驗證。",
+      "【編譯檢查】執行 cargo check --manifest-path src-tauri/Cargo.toml。"
+    ]
+  }
+];
+
+const SKILLS_CATALOG = [
+  { id: "poteto-mode", cat: "CORE", name: "poteto-mode (總路由)", desc: "非瑣碎工程任務預設總入口，內建 23 個劇本 (Playbooks) 與 24 項工程原則索引。", path: ".agents/skills/poteto-mode/SKILL.md" },
+  { id: "pyliu-mode", cat: "CORE", name: "pyliu-mode (個人工作流)", desc: "開放式需求結構化訪談、零額外套件、雙端同步、自動 verify-lah 驗證與繁中完整 Commit。", path: ".agents/skills/pyliu-mode/SKILL.md" },
+  { id: "poteto-help", cat: "CORE", name: "poteto-help (技能導覽)", desc: "查詢適合目前任務的技能、劇本或工程原則，並提供繁體中文提示詞範本。", path: ".agents/skills/poteto-help/SKILL.md" },
+  { id: "how", cat: "CORE", name: "how (機制解析)", desc: "深入追蹤並圖解說明某個子系統或跨專案資料流的實際運作機制。", path: ".agents/skills/how/SKILL.md" },
+  { id: "why", cat: "CORE", name: "why (設計原因考證)", desc: "透過 Git 歷史與文件考證某項架構或程式碼設計背後的真實原因。", path: ".agents/skills/why/SKILL.md" },
+  { id: "teach", cat: "CORE", name: "teach (循序圖解教學)", desc: "結合 how 與 why，以循序漸進的圖表與繁體中文白話解說子系統或變更。", path: ".agents/skills/teach/SKILL.md" },
+  { id: "blast-radius", cat: "CORE", name: "blast-radius (爆炸半徑分析)", desc: "分析變更可能波及的所有呼叫端與跨專案介面，並以實證確認安全性。", path: ".agents/skills/blast-radius/SKILL.md" },
+  { id: "architect", cat: "CORE", name: "architect (跨邊界設計)", desc: "跨越模組或專案邊界前，平行探索多種介面與型別設計方案。", path: ".agents/skills/architect/SKILL.md" },
+  { id: "arena", cat: "CORE", name: "arena (多方案競標)", desc: "針對同一任務平行啟動 N 個獨立實作方案，交叉評審並嫁接最佳部分。", path: ".agents/skills/arena/SKILL.md" },
+  { id: "swarm", cat: "CORE", name: "swarm (平行切片集群)", desc: "派遣 N 個平行子代理分別處理不同切片或檢查項目，最後彙整為單一繁中報告。", path: ".agents/skills/swarm/SKILL.md" },
+  { id: "figure-it-out", cat: "CORE", name: "figure-it-out (客製化劇本)", desc: "面對大型跨專案遷移或無內建劇本適用時，量身設計可稽核的專屬執行劇本。", path: ".agents/skills/figure-it-out/SKILL.md" },
+  { id: "in-your-own-words", cat: "CORE", name: "in-your-own-words (理解確認)", desc: "動手前先用自己的話重述目標與問題核心，確保與開發者理解一致。", path: ".agents/skills/in-your-own-words/SKILL.md" },
+  { id: "sharpen", cat: "CORE", name: "sharpen (提示詞精煉)", desc: "將模糊需求精煉為專家視角的問題定義，同時保留設計空間。", path: ".agents/skills/sharpen/SKILL.md" },
+  { id: "recall", cat: "CORE", name: "recall (上下文重建)", desc: "從近期對話紀錄與版控狀態重建特定主題的上下文簡報。", path: ".agents/skills/recall/SKILL.md" },
+  { id: "ketchup", cat: "CORE", name: "ketchup (進度快報)", desc: "快速摘要自上次訊息以來的變更進度、視覺化狀態與待決策事項。", path: ".agents/skills/ketchup/SKILL.md" },
+  { id: "setup-pstack", cat: "CORE", name: "setup-pstack (模型配置)", desc: "設定各工程角色所使用的模型層級與推理預算 (.agents/rules/pstack-models.md)。", path: ".agents/skills/setup-pstack/SKILL.md" },
+  { id: "automate-me", cat: "CORE", name: "automate-me (習慣萃取)", desc: "分析過往對話紀錄中的工作習慣，量身打造個人化的 -mode 路由技能。", path: ".agents/skills/automate-me/SKILL.md" },
+  { id: "make-bot-ui", cat: "CORE", name: "make-bot-ui (機器人面板)", desc: "建立可透過 Webhook 觸發遠端任務的控制面板介面。", path: ".agents/skills/make-bot-ui/SKILL.md" },
+  { id: "verify-lah", cat: "VERIFY", name: "verify-lah (LAH 實機驗證)", desc: "LAH 工作區專屬跨專案實機驗證技能，驅動瀏覽器、API 與 WebSocket 進行端到端取證。", path: ".agents/skills/verify-lah/SKILL.md" },
+  { id: "interrogate", cat: "VERIFY", name: "interrogate (對抗式審查)", desc: "對程式碼變更 (Diff) 進行多視角嚴格審查，找出邊界條件漏洞與品質缺失。", path: ".agents/skills/interrogate/SKILL.md" },
+  { id: "tdd", cat: "VERIFY", name: "tdd (測試驅動開發)", desc: "先撰寫可重現問題的失敗測試，再實作最小修復使其通過。", path: ".agents/skills/tdd/SKILL.md" },
+  { id: "benchmark-checklist", cat: "VERIFY", name: "benchmark-checklist (效能檢核)", desc: "回報效能數據或加速倍率前，嚴格檢驗瓶頸因子、暖機與端到端關聯性。", path: ".agents/skills/benchmark-checklist/SKILL.md" },
+  { id: "create-verification-skill", cat: "VERIFY", name: "create-verification-skill", desc: "為專案建立自動化行為驗證技能與功能地圖 (Feature Map)。", path: ".agents/skills/create-verification-skill/SKILL.md" },
+  { id: "maintain-verification-skill", cat: "VERIFY", name: "maintain-verification-skill", desc: "當驗證技能的功能地圖與實際程式碼產生偏移時進行校準與更新。", path: ".agents/skills/maintain-verification-skill/SKILL.md" },
+  { id: "technical-writing", cat: "VERIFY", name: "technical-writing (技術寫作)", desc: "結合 Diátaxis、Google 開發者風格與 LAH 台灣繁中術語及三段式 Commit 規範。", path: ".agents/skills/technical-writing/SKILL.md" },
+  { id: "unslop", cat: "VERIFY", name: "unslop (去 AI 贅字)", desc: "清除文字中的 AI 罐頭語氣、空洞形容詞、過度破折號與生硬句型。", path: ".agents/skills/unslop/SKILL.md" },
+  { id: "no-comments", cat: "VERIFY", name: "no-comments (註解紀律)", desc: "清理本次新增變更中的冗餘敘事註解與死碼，同時嚴格保留既有程式碼註解。", path: ".agents/skills/no-comments/SKILL.md" },
+  { id: "show-me-your-work", cat: "VERIFY", name: "show-me-your-work (決策軌跡)", desc: "維護結構化的 TSV 決策軌跡紀錄，方便事後稽核各項假設與取捨。", path: ".agents/skills/show-me-your-work/SKILL.md" },
+  { id: "reflect", cat: "VERIFY", name: "reflect (經驗提煉)", desc: "在大型任務完成後，從對話紀錄提煉經驗並轉化為結構化規則更新。", path: ".agents/skills/reflect/SKILL.md" },
+  { id: "correct", cat: "VERIFY", name: "correct (根治錯誤)", desc: "針對重複發生的錯誤，按「架構 → 型別 → Lint/CI → 測試 → 文件」最高層級根治。", path: ".agents/skills/correct/SKILL.md" },
+  { id: "typescript-best-practices", cat: "VERIFY", name: "typescript-best-practices", desc: "TypeScript / JavaScript 型別系統紀律與實務模式指南。", path: ".agents/skills/typescript-best-practices/SKILL.md" },
+  { id: "bro", cat: "VERIFY", name: "bro (白話轉譯)", desc: "用最直白、零術語的台灣日常白話文重新解釋複雜技術訊息。", path: ".agents/skills/bro/SKILL.md" },
+  { id: "principle-laziness-protocol", cat: "PRINCIPLE", name: "惰性法則 (Laziness Protocol)", desc: "傾向刪除程式碼與最小必要變更，拒絕無謂的抽象層。", path: ".agents/skills/principle-laziness-protocol/SKILL.md" },
+  { id: "principle-foundational-thinking", cat: "PRINCIPLE", name: "基礎優先思維 (Foundational Thinking)", desc: "寫業務邏輯前先定好核心型別與資料結構；基礎鷹架優先於功能。", path: ".agents/skills/principle-foundational-thinking/SKILL.md" },
+  { id: "principle-redesign-from-first-principles", cat: "PRINCIPLE", name: "第一性原理重新設計", desc: "將新需求視為第一天就存在的基礎假設來設計，而非硬打補丁。", path: ".agents/skills/principle-redesign-from-first-principles/SKILL.md" },
+  { id: "principle-attack-the-premise", cat: "PRINCIPLE", name: "質疑前提 (Attack the Premise)", desc: "當共用同一前提的兩次修復都失敗時，先直接驗證該前提本身。", path: ".agents/skills/principle-attack-the-premise/SKILL.md" },
+  { id: "principle-subtract-before-you-add", cat: "PRINCIPLE", name: "先減後加 (Subtract Before You Add)", desc: "新增功能或重構前，先移除死碼、冗餘驗證與廢棄引用。", path: ".agents/skills/principle-subtract-before-you-add/SKILL.md" },
+  { id: "principle-minimize-reader-load", cat: "PRINCIPLE", name: "最小化閱讀負擔", desc: "減少問題與答案之間的跳轉層數與隱藏狀態，收斂可變狀態作用域。", path: ".agents/skills/principle-minimize-reader-load/SKILL.md" },
+  { id: "principle-outcome-oriented-execution", cat: "PRINCIPLE", name: "結果導向執行", desc: "分階段遷移時直接收斂至目標架構，不保留用完即丟的過渡相容層。", path: ".agents/skills/principle-outcome-oriented-execution/SKILL.md" },
+  { id: "principle-experience-first", cat: "PRINCIPLE", name: "體驗優先 (Experience First)", desc: "使用者與維護者的順暢體驗優先於實作上的省事方便。", path: ".agents/skills/principle-experience-first/SKILL.md" },
+  { id: "principle-exhaust-the-design-space", cat: "PRINCIPLE", name: "窮盡設計空間", desc: "面對無前例的設計決策時，先建立 2~3 個競爭原型並排比較。", path: ".agents/skills/principle-exhaust-the-design-space/SKILL.md" },
+  { id: "principle-build-the-lever", cat: "PRINCIPLE", name: "打造槓桿工具 (Build the Lever)", desc: "非瑣碎工作應打造可重跑的腳本、產生器或檢測工具，而非純人工修改。", path: ".agents/skills/principle-build-the-lever/SKILL.md" },
+  { id: "principle-model-the-domain", cat: "PRINCIPLE", name: "為領域建立模型 (Model the Domain)", desc: "用狀態機、查表與強型別模型取代散落各處的 if/else 條件分支。", path: ".agents/skills/principle-model-the-domain/SKILL.md" },
+  { id: "principle-boundary-discipline", cat: "PRINCIPLE", name: "邊界紀律 (Boundary Discipline)", desc: "在系統邊界設立防禦檢查，保持內部核心業務邏輯純粹，嚴守跨專案邊界。", path: ".agents/skills/principle-boundary-discipline/SKILL.md" },
+  { id: "principle-type-system-discipline", cat: "PRINCIPLE", name: "型別系統紀律", desc: "讓非法狀態無法被表示，在系統邊界解析外部資料。", path: ".agents/skills/principle-type-system-discipline/SKILL.md" },
+  { id: "principle-make-operations-idempotent", cat: "PRINCIPLE", name: "確保操作冪等性", desc: "確保指令與排程具冪等性，重複執行皆收斂至相同最終狀態。", path: ".agents/skills/principle-make-operations-idempotent/SKILL.md" },
+  { id: "principle-migrate-callers-then-delete-legacy-apis", cat: "PRINCIPLE", name: "遷移呼叫端後刪除舊內部 API", desc: "在同一波變更中完成內部呼叫端遷移與舊介面清理。", path: ".agents/skills/principle-migrate-callers-then-delete-legacy-apis/SKILL.md" },
+  { id: "principle-separate-before-serializing-shared-state", cat: "PRINCIPLE", name: "共享狀態先分離再序列化", desc: "並行作業時優先消除共享狀態，確有必要才加鎖序列化。", path: ".agents/skills/principle-separate-before-serializing-shared-state/SKILL.md" },
+  { id: "principle-prove-it-works", cat: "PRINCIPLE", name: "證明它能運作 (Prove It Works)", desc: "宣告完成前必須對真實產物進行實測驗證，不單憑語法通過交差。", path: ".agents/skills/principle-prove-it-works/SKILL.md" },
+  { id: "principle-fix-root-causes", cat: "PRINCIPLE", name: "修復根本原因 (Fix Root Causes)", desc: "將每個症狀追溯至系統最初出錯位置並修復，不以表面防呆掩蓋。", path: ".agents/skills/principle-fix-root-causes/SKILL.md" },
+  { id: "principle-sequence-verifiable-units", cat: "PRINCIPLE", name: "拆解為可驗證序列單元", desc: "將多步驟變更拆解為可獨立驗證的最小單元，逐一驗證後推進。", path: ".agents/skills/principle-sequence-verifiable-units/SKILL.md" },
+  { id: "principle-test-behavior-not-implementation", cat: "PRINCIPLE", name: "測試行為而非實作細節", desc: "斷言使用者可觀察到的外部行為，確保重構內部實作時測試不脆斷。", path: ".agents/skills/principle-test-behavior-not-implementation/SKILL.md" },
+  { id: "principle-explain-the-number", cat: "PRINCIPLE", name: "解釋數據背後的成因", desc: "信賴任何量測數據前，先找出瓶頸因子並排除量測失真。", path: ".agents/skills/principle-explain-the-number/SKILL.md" },
+  { id: "principle-guard-the-context-window", cat: "PRINCIPLE", name: "守護上下文視窗", desc: "將繁重的讀取與平行探索委派給子代理，主執行緒保留精煉摘要。", path: ".agents/skills/principle-guard-the-context-window/SKILL.md" },
+  { id: "principle-never-block-on-the-human", cat: "PRINCIPLE", name: "不因可逆工作卡在人類身上", desc: "可逆且安全的操作直接執行並展示結果，僅在授權紅線時暫停。", path: ".agents/skills/principle-never-block-on-the-human/SKILL.md" },
+  { id: "principle-encode-lessons-in-structure", cat: "PRINCIPLE", name: "將教訓編碼進結構中", desc: "將重複提醒的規範編碼為 Lint、型別或自動化腳本。", path: ".agents/skills/principle-encode-lessons-in-structure/SKILL.md" }
+];
+
+let activeRepoId = "LAH-API";
+let activeBlastId = "http-api";
+let activeSkillCat = "ALL";
+
+function copyText(text, btnEl) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text);
+  } else {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+  }
+  if (btnEl) {
+    const orig = btnEl.textContent;
+    btnEl.textContent = "已複製";
+    setTimeout(() => { btnEl.textContent = orig; }, 1400);
+  }
+}
+
+function selectRepo(repoId) {
+  const repo = REPO_REGISTRY[repoId];
+  if (!repo) return;
+  activeRepoId = repoId;
+
+  // Update Topology Inspector
+  document.getElementById("inspTitle").textContent = repo.name;
+  document.getElementById("inspDesc").textContent = repo.desc;
+  document.getElementById("inspGit").textContent = "branch: " + repo.branch + " | " + repo.remote;
+  document.getElementById("inspPort").textContent = repo.ports;
+  document.getElementById("inspCmd").textContent = repo.commands[0].cmd;
+
+  // Render Tabs & Detail Card
+  const nav = document.getElementById("repoTabsNav");
+  nav.innerHTML = Object.keys(REPO_REGISTRY).map(id => {
+    const r = REPO_REGISTRY[id];
+    const cls = id === activeRepoId ? "tab-btn active" : "tab-btn";
+    return `<button type="button" class="${cls}" onclick="selectRepo('${id}')">${r.id === 'ROOT' ? 'LAH-Workspace (根目錄)' : r.id}</button>`;
+  }).join("");
+
+  const card = document.getElementById("repoDetailCard");
+  const structLines = repo.structure.join("\n");
+  const rulesHtml = repo.rules.map(rule => `<li style="margin-bottom:6px;">${rule}</li>`).join("");
+  const cmdsHtml = repo.commands.map(c => `
+    <div style="margin-bottom:10px;">
+      <div class="form-label">${c.label}</div>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyText('${c.cmd.replace(/\\/g, "\\\\")}', this)">複製</button>
+        <code>${c.cmd}</code>
+      </div>
+    </div>
+  `).join("");
+
+  card.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
+      <div>
+        <h3 style="font-size:18px;color:var(--accent-cyan);margin-bottom:4px;">${repo.name}</h3>
+        <p style="font-size:13.5px;color:var(--text-secondary);">${repo.desc}</p>
+      </div>
+      <div>
+        <span class="tag tag-blue">分支：${repo.branch}</span>
+        <span class="tag tag-green">${repo.ports}</span>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <div class="form-label">核心目錄結構與模組分工</div>
+        <div class="code-block"><pre class="mono">${structLines}</pre></div>
+        <div class="form-label" style="margin-top:12px;">技術棧與環境規格</div>
+        <p style="font-size:13px;color:var(--text-secondary);">${repo.stack}</p>
+      </div>
+      <div>
+        <div class="form-label">專案專屬架構守則與紅線 (AGENTS.md)</div>
+        <ul style="padding-left:18px;font-size:13px;color:var(--text-main);margin-bottom:14px;">${rulesHtml}</ul>
+        ${cmdsHtml}
+      </div>
+    </div>
+  `;
+}
+
+function selectBlast(blastId) {
+  activeBlastId = blastId;
+  const nav = document.getElementById("blastTabsNav");
+  nav.innerHTML = BLAST_SCENARIOS.map(b => {
+    const cls = b.id === activeBlastId ? "tab-btn active" : "tab-btn";
+    return `<button type="button" class="${cls}" onclick="selectBlast('${b.id}')">${b.title.split("：")[0]}</button>`;
+  }).join("");
+
+  const item = BLAST_SCENARIOS.find(b => b.id === activeBlastId) || BLAST_SCENARIOS[0];
+  const badges = item.affected.map(a => `<span class="tag tag-amber">${a}</span>`).join(" ");
+  const checks = item.checks.map(c => `<li style="margin-bottom:8px;">${c}</li>`).join("");
+
+  document.getElementById("blastResultCard").innerHTML = `
+    <h3 style="font-size:17px;color:var(--accent-amber);margin-bottom:6px;">${item.title}</h3>
+    <p style="font-size:12.5px;color:var(--text-muted);margin-bottom:12px;">適用契約條款：${item.contract}</p>
+    <div style="margin-bottom:14px;">
+      <span class="form-label" style="display:inline-block;margin-right:8px;">受波及之儲存庫與範圍：</span>
+      ${badges}
+    </div>
+    <div class="form-label">變更前與交付前強制檢核清單：</div>
+    <ul style="padding-left:20px;font-size:13.5px;color:var(--text-main);margin-top:6px;">${checks}</ul>
+  `;
+}
+
+function updateGitBuilder() {
+  const repo = document.getElementById("gitRepoSel").value;
+  const type = document.getElementById("gitTypeSel").value;
+  const summary = document.getElementById("gitSummaryInp").value.trim() || "更新專案模組";
+  const purpose = document.getElementById("gitPurposeInp").value.trim();
+  const itemsRaw = document.getElementById("gitItemsInp").value.trim().split("\n").filter(Boolean);
+  const compat = document.getElementById("gitCompatInp").value.trim();
+
+  const cdLine = repo === "." ? "# 確認位於工作區根目錄 (d:\\DEV\\lah-workspace)" : `cd .\\${repo}`;
+  const itemsFormatted = itemsRaw.map(line => `  - ${line.replace(/^-\s*/, "")}`).join("\n");
+
+  const output = `${cdLine}
+git status
+git diff
+git add -A
+git commit -m "${type}: ${summary}" -m "- 修改目的：${purpose}
+- 修改項目：
+${itemsFormatted}
+- 相容性說明：${compat}"
+git push`;
+
+  document.getElementById("gitBuilderOutput").textContent = output;
+}
+
+function setSkillCat(cat, btnEl) {
+  activeSkillCat = cat;
+  document.querySelectorAll("#skillCatBtns .btn").forEach(b => b.classList.remove("btn-primary"));
+  if (btnEl) btnEl.classList.add("btn-primary");
+  renderSkillsTable();
+}
+
+function renderSkillsTable() {
+  const q = (document.getElementById("skillFilterInput").value || "").trim().toLowerCase();
+  const rows = SKILLS_CATALOG.filter(s => {
+    const matchCat = activeSkillCat === "ALL" || s.cat === activeSkillCat;
+    const matchQ = !q || s.id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q);
+    return matchCat && matchQ;
+  }).map(s => {
+    const tagClass = s.cat === "CORE" ? "tag-blue" : (s.cat === "VERIFY" ? "tag-green" : "tag-purple");
+    const catLabel = s.cat === "CORE" ? "核心與調度" : (s.cat === "VERIFY" ? "驗證與寫作" : "工程原則");
+    return `
+      <tr>
+        <td><code class="mono" style="font-weight:700;color:var(--accent-cyan);">/${s.id}</code><div style="font-size:11.5px;color:var(--text-secondary);">${s.name}</div></td>
+        <td><span class="tag ${tagClass}">${catLabel}</span></td>
+        <td>${s.desc}</td>
+        <td><code class="mono" style="font-size:11.5px;color:var(--text-muted);">${s.path}</code></td>
+      </tr>
+    `;
+  }).join("");
+
+  document.getElementById("skillsTableBody").innerHTML = rows || `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">查無符合條件的技能</td></tr>`;
+}
+
+// Theme Toggle & Global Search
+document.getElementById("themeToggleBtn").addEventListener("click", () => {
+  const html = document.documentElement;
+  const next = html.getAttribute("data-theme") === "light" ? "dark" : "light";
+  html.setAttribute("data-theme", next);
+});
+
+document.getElementById("globalSearch").addEventListener("input", (e) => {
+  const val = e.target.value.trim();
+  const skillInput = document.getElementById("skillFilterInput");
+  if (val) {
+    skillInput.value = val;
+    renderSkillsTable();
+  }
+});
+
+// Initialize all interactive views on load
+selectRepo("LAH-API");
+selectBlast("http-api");
+updateGitBuilder();
+renderSkillsTable();
+</script>
+</body>
+</html>
