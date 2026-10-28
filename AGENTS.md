@@ -15,7 +15,7 @@
 | `./LAH-FE/` | 智慧管控系統前端 | Nuxt 2.15.8 (Vue 2)、BootstrapVue 2.23.0 | 提供智慧監控管理介面，並內嵌即時通功能（移植元件群 `lah-messenger-*.vue`）；透過 HTTP 呼叫 `LAH-API`，並透過 WebSocket/HTTP 與 `lah-messenger-server` 進行即時通訊 |
 | `./lah-messenger-server/` | 即時通伺服器 | Node.js (CommonJS)、ws ^7.4.6、Express ^4 | 維持 WebSocket 長連線、處理即時事件與附件，並存取 SQLite |
 | `./lah-messenger/` | 桃園即時通桌面客戶端 | Electron 39.8.10、Nuxt 2.15.8、Nuxtron ^0.3.1 | 透過 HTTP 呼叫 `LAH-API` 處理業務功能，透過 WebSocket 連線即時通伺服器 |
-| `./LAH-Updater/` | 系統自動更新部署工具 | Python 3.10+ 標準庫 (`tkinter`)、PyInstaller | 供各地政事務所管理師讀取更新壓縮包 (`.zip`) 自動對齊解壓覆蓋，並控制 Apache 與 PM2 服務重啟 |
+| `./LAH-Updater/` | 系統自動更新部署工具 | Tauri 2 (Rust)、純靜態 HTML/JS、Python 3.10+ (僅 pack.py 打包腳本) | 提供自動更新 (updater)、重要資料備份 (backuper) 與自動移除 (uninstaller) 工具，對齊解壓覆蓋並控制 Apache 與 PM2 服務重啟 |
 
 ### 1.1 資料流向與架構拓撲
 
@@ -127,12 +127,13 @@ flowchart TD
 
 #### 5. `./LAH-Updater/` (系統自動更新部署工具)
 - **環境與主要依賴**：
-  - Runtime：`Python 3.10+`（嚴格僅使用 Python 標準庫 `tkinter`, `ttk`, `zipfile`, `subprocess`, `threading`, `ctypes` 等，零外部執行期依賴）
-  - 打包工具：`PyInstaller`（僅開發期編譯單一 `.exe` 使用）
+  - 核心架構：`Tauri 2 (Rust)` + 純靜態 HTML/JS 前端（`updater/`, `uninstaller/`, `backuper/` 三大獨立工具）
+  - 系統原始碼打包腳本：`pack/pack.py`（Python 3.10+ 標準庫，零外部依賴）
 - **常用測試與打包指令**：
-  - 語法檢查：`python -m py_compile updater.py`
-  - 直接啟動 GUI：`python updater.py`
-  - 單一執行檔打包（需人工確認）：`pyinstaller --noconfirm --onefile --windowed --uac-admin --name "智慧控管與監控系統 - 自動更新工具" updater.py`
+  - 建立更新工具：`python updater/build.py`（或執行 `建立自動更新工具.bat`，自動執行 `cargo build --release` 並發布至 `dist/`）
+  - 建立移除工具：`python uninstaller/build.py`（或執行 `建立解除安裝工具.bat`）
+  - 建立備份工具：`python backuper/build.py`（或執行 `建立自動備份工具.bat`）
+  - 原始碼全系統打包：`python pack/pack.py`（或執行 `打包智慧控管及監控系統.bat`）
 
 ---
 
