@@ -15,7 +15,7 @@
 | `./LAH-FE/` | 智慧管控系統前端 | Nuxt 2.15.8 (Vue 2)、BootstrapVue 2.23.0 | 提供智慧監控管理介面，並內嵌即時通功能（移植元件群 `lah-messenger-*.vue`）；透過 HTTP 呼叫 `LAH-API`，並透過 WebSocket/HTTP 與 `lah-messenger-server` 進行即時通訊 |
 | `./lah-messenger-server/` | 即時通伺服器 | Node.js (CommonJS)、ws ^7.4.6、Express ^4 | 維持 WebSocket 長連線、處理即時事件與附件，並存取 SQLite |
 | `./lah-messenger/` | 桃園即時通桌面客戶端 | Electron 39.8.10、Nuxt 2.15.8、Nuxtron ^0.3.1 | 透過 HTTP 呼叫 `LAH-API` 處理業務功能，透過 WebSocket 連線即時通伺服器 |
-| `./LAH-Updater/` | 系統自動更新部署工具 | Tauri 2 (Rust)、純靜態 HTML/JS、Python 3.10+ (僅 pack.py 打包腳本) | 提供自動更新 (updater)、重要資料備份 (backuper) 與自動移除 (uninstaller) 工具，對齊解壓覆蓋並控制 Apache 與 PM2 服務重啟 |
+| `./LAH-Updater/` | 系統自動更新部署工具 | Tauri 2 (Rust)、純靜態 HTML/JS、Python 3.10+ (僅 pack.py 打包腳本) | 提供自動更新 (updater)、重要資料備份 (backuper)、可攜式 Node 安裝 (node-portable) 與自動移除 (uninstaller) 工具，對齊解壓覆蓋並控制 Apache 與 PM2 服務重啟 |
 
 ### 1.1 資料流向與架構拓撲
 
@@ -127,10 +127,11 @@ flowchart TD
 
 #### 5. `./LAH-Updater/` (系統自動更新部署工具)
 - **環境與主要依賴**：
-  - 核心架構：`Tauri 2 (Rust)` + 純靜態 HTML/JS 前端（`updater/`, `uninstaller/`, `backuper/` 三大獨立工具）
-  - 系統原始碼打包腳本：`pack/pack.py`（Python 3.10+ 標準庫，零外部依賴）
+  - 核心架構：`Tauri 2 (Rust)` + 純靜態 HTML/JS 前端（`updater/`, `node-portable/`, `uninstaller/`, `backuper/` 四大獨立工具）
+  - 系統原始碼打包腳本：`pack/pack.py`（Python 3.10+ 標準庫，零外部依賴，三向自動分流至 `dist/patch/`, `dist/node_modules/`, `dist/base/`）
 - **常用測試與打包指令**：
   - 建立更新工具：`python updater/build.py`（或執行 `建立自動更新工具.bat`，自動執行 `cargo build --release` 並發布至 `dist/`）
+  - 建立可攜 Node 工具：`python node-portable/build.py`（或執行 `建立可攜式NODE安裝工具.bat`）
   - 建立移除工具：`python uninstaller/build.py`（或執行 `建立解除安裝工具.bat`）
   - 建立備份工具：`python backuper/build.py`（或執行 `建立自動備份工具.bat`）
   - 原始碼全系統打包：`python pack/pack.py`（或執行 `打包智慧控管及監控系統.bat`）
@@ -613,3 +614,60 @@ Agent 的：
 5. **事後死角審查（搭配 [`interrogate`](./.agents/skills/interrogate/SKILL.md)）**：
    - 若使用者於程式碼修改後要求進行嚴苛審查，自動結合 [`interrogate`](./.agents/skills/interrogate/SKILL.md) 技能，僅條列具體邊界漏洞、型別不一致與資安風險，不輸出無關的冗長重構。
 
+---
+
+## 14. Windows 伺服器離線維運與組態自癒防護契約 (Lesson Learnt)
+
+針對地政內網實體隔離環境（Air-gapped）、各代 Windows Server（2012R2 / 2016 / 2019 / 2022）相容性，以及歷次實機部署與跨磁碟移轉時所排除之重大崩潰隱患，全域 Agent 在開發、維護或修改維運工具與服務設定時，必須嚴格遵守以下防護契約：
+
+### 14.1 Node.js 16 與 PM2 四重安全隔離與殘留模組防禦
+
+地政伺服器可能因機關資安弱點掃描（CVE）要求強制將系統全域升級至 Node.js 22+。為保證本系統 Nuxt 2 (Vue 2) 與 PM2 守護程序 100% 穩定自立運行，必須實施四重隔離機制：
+
+1. **WinSW 服務實體絕對路徑綁定**：
+   - 在 `lah_pm2_service.xml` 中，執行器與參數必須直接鎖定為實體絕對路徑 `<root_dir>\node\node.exe` 與 `<root_dir>\node\node_modules\pm2\bin\pm2`。
+   - 嚴禁透過系統全域 `PATH` 尋找 `node` 或 `pm2`，確保全域 Node 升級時，系統服務不受干擾。
+2. **專案獨立 `PM2_HOME` 邊界**：
+   - 強制環境變數 `PM2_HOME = <root_dir>\.pm2`，將所有守護行程、PID 鎖定檔、模組配置與 `dump.pm2` 收斂於專案目錄內，完全脫鉤全域 `C:\ProgramData\pm2` 與 `%USERPROFILE%\.pm2`。
+3. **舊全域殘留模組淨化與無損遷移 (`wire_bundled_pm2_logrotate`)**：
+   - 曾安裝舊版 `pm2-installer` 之伺服器常於 `module_conf.json` 殘留第三方分支模組 `@jessety/pm2-logrotate` 或 `pm2-logrotate-ext`。
+   - 工具執行時必須主動檢測並清除該殘留鍵值，並將使用者既有輪替參數（`max_size`、`retain`、`dateFormat`）無損平移至官方標準 `pm2-logrotate`，並強制預設啟用 `compress: true`。
+   - 比對 `module-db-v2` 登記之模組清單，若磁碟上無對應 `package.json`（孤立幽靈模組），必須立即自登記表剔除。
+4. **PM2 模組載入器防禦性保護 (`NPM.js`)**：
+   - 在 `node\node_modules\pm2\lib\API\Modules\NPM.js` 核心中注入檔案存在性檢查與例外捕獲：若模組路徑不存在則印出警告並略過；將 `require(opts.cmd || opts.package)` 封裝於 `try { ... } catch (e)` 中，嚴防缺失模組丟出未捕獲之 `MODULE_NOT_FOUND` 異常導致 PM2 Daemon 啟動崩潰（`pm2 -v` 判定失敗）。
+
+### 14.2 Apache 2.4 & 雙 PHP 組態自癒與跨磁碟遷移防護
+
+當系統由舊版 AppServ 遷移或跨磁碟（如 `C:\AppServ` 移至 `D:\DEV`）重新配置時，必須確保組態自癒與日誌正常運作：
+
+1. **日誌管道動態校準 (`rotatelogs.exe`)**：
+   - 動態正規化 `httpd.conf` 中 `ErrorLog` 與 `CustomLog` 之管道命令，將硬編碼之舊路徑（如 `C:/AppServ/Apache24/logs/...`）動態替換為當前安裝目錄 `<apache_dir>/logs/`。避免因目標日誌目錄不存在導致 Apache 服務啟動時靜默失敗。
+2. **舊版 AppServ 散落指令深度清理**：
+   - 徹底清除 `httpd.conf` 舊版散落之 `LoadFile` (php7 相依 DLL)、`LoadModule php7_module`、`PHPIniDir` 與 `<IfModule mod_php7.c>` 區塊，再以標準區塊統一掛載，嚴防重複載入衝突。
+   - 自動清除指向舊路徑（如 `C:/AppServ`）之無效 `Alias /LAH-API` 與 `<Directory .../LAH-API>` 區塊，防止與新注入之 FastCGI Proxy 產生衝突。
+3. **`php.ini` 延伸模組目錄唯一性保證**：
+   - 逐行過濾清理所有重複或註解殘留之 `extension_dir`，嚴格保證 `php.ini` 僅保留單一精準之 `extension_dir = "<php_dir>/ext"` 設定，防止 PHP 載入錯誤或無效擴充目錄。
+
+### 14.3 行程安全鎖定釋放與解壓自癒規範
+
+Windows 作業系統具備嚴格的檔案佔用鎖定機制，覆蓋更新時必須遵守安全解壓管線：
+
+1. **解壓前行程安全釋放**：
+   - 覆蓋解壓前，必須先停止 Windows 系統服務（`Apache2.4`、`LAH_PM2_Service`）、調用 `kill_pm2_daemon` 終止背景 Node 守護行程，並確認 `node.exe` 與 `httpd.exe` 未處於鎖定狀態（`is_file_locked`），防杜 Windows `Access is denied (os error 5)` 錯誤。
+2. **單一頂層前綴自動剝除 (`detect_strip_prefix`)**：
+   - 解壓時自動偵測壓縮包頂層結構，若含有與期望目標同名之單一資料夾（例如 `Apache24.zip` 內含 `Apache24/`），自動剝除外層前綴對齊解壓至目標目錄。
+3. **雙層巢狀目錄自癒攤平 (`auto_flatten_nested_dirs`)**：
+   - 解壓完成後自動巡檢根目錄，若發現 `node\node`、`php7\php7`、`php85\php85` 或 `Apache24\Apache24` 等雙層巢狀結構，自動將內層檔案安全平移提升至正確層級並清理孤立空目錄。
+
+### 14.4 離線環境（Zero-CDN）與向後相容規範
+
+地政伺服器多處於完全實體隔離之封閉內網（Air-gapped），且部分仍運行 Windows Server 2012R2 / 2016：
+
+1. **嚴禁任何外部 CDN 與遠端字型**：
+   - 所有桌面維運工具（`updater`、`node-portable`、`uninstaller`、`backuper`）與說明文件（`README.html`）必須 100% 離線純本機靜態打造。
+   - 嚴格禁止引用 Google Fonts、cdnjs、unpkg 等任何外部 URL，杜絕內網連線逾時（Hang / Timeout 30 秒至數分鐘）。
+2. **Windows Server 符號相容性（豆腐方塊防禦）**：
+   - 介面避免直接使用高版本 Unicode（Unicode 11.0+）Emoji 符號，改用內嵌向量 SVG 圖示或向下相容之 Unicode 4.0 符號（如 `⚡`、`⚙️`、`🏠`），防杜舊版 Windows Server 缺少字型時顯示缺字方框。
+3. **標準打包三向分流規範 (`pack.py`)**：
+   - 依更新頻率與體積自動分流至標準目錄：業務程式至 `dist/patch/`、依賴套件至 `dist/node_modules/`、基礎環境至 `dist/base/`。
+   - 各工具探測時必須實作階層式回退機制（指定子目錄 ➔ 同層目錄 ➔ `C:\Temp`），確保維運操作彈性與強健性。
