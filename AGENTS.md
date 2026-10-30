@@ -127,15 +127,16 @@ flowchart TD
 
 #### 5. `./LAH-Updater/` (系統自動更新部署工具)
 - **環境與主要依賴**：
-  - 核心架構：`Tauri 2 (Rust)` + 純靜態 HTML/JS 前端（`updater/`, `node-portable/`, `uninstaller/`, `backuper/` 四大維運工具與 `tools/` 擴充小工具套件庫）
+  - 核心架構：`Tauri 2 (Rust)` + 純靜態 HTML/JS 前端（`tools/` 擴充維運工具套件庫，含 `updater/`, `node-portable/`, `uninstaller/`, `backuper/`, `dashboard/`, `sms-env-editor` 等）
   - 系統原始碼打包腳本：`pack/pack.py`（Python 3.10+ 標準庫，零外部依賴，三向自動分流至 `dist/patch/`, `dist/node_modules/`, `dist/base/`）
 - **小工具開發與圖示規範**：
   - 於 `tools/` 開發新工具時嚴禁直接沿用既有圖示，必須量身設計專屬意象，並在動手前提出 2 至 3 組視覺方案供使用者親自選擇，定案後以 `generate_icons.ps1` 產出完整多解析度 ICO/PNG 套件。
 - **常用測試與打包指令**：
-  - 建立更新工具：`python updater/build.py`（或執行 `建立自動更新工具.bat`，自動執行 `cargo build --release` 並發布至 `dist/`）
-  - 建立可攜 Node 工具：`python node-portable/build.py`（或執行 `建立可攜式NODE安裝工具.bat`）
-  - 建立移除工具：`python uninstaller/build.py`（或執行 `建立解除安裝工具.bat`）
-  - 建立備份工具：`python backuper/build.py`（或執行 `建立自動備份工具.bat`）
+  - 建立更新工具：`python tools/updater/build.py`（或執行 `建立自動更新工具.bat`，自動執行 `cargo build --release` 並發布至 `dist/`）
+  - 建立可攜 Node 工具：`python tools/node-portable/build.py`（或執行 `建立可攜NODE工具.bat`）
+  - 建立移除工具：`python tools/uninstaller/build.py`（或執行 `建立解除安裝工具.bat`）
+  - 建立備份工具：`python tools/backuper/build.py`（或執行 `建立自動備份工具.bat`）
+  - 建立管理儀表板工具：`python tools/dashboard/build.py`（或執行 `建立管理儀表板工具.bat`）
   - 建立簡訊設定工具：`python tools/sms-env-editor/build.py`（或執行 `建立簡訊設定工具.bat`）
   - 原始碼全系統打包：`python pack/pack.py`（或執行 `打包智慧控管及監控系統.bat`）
 
@@ -650,6 +651,11 @@ Agent 的：
    - 自動清除指向舊路徑（如 `C:/AppServ`）之無效 `Alias /LAH-API` 與 `<Directory .../LAH-API>` 區塊，防止與新注入之 FastCGI Proxy 產生衝突。
 3. **`php.ini` 延伸模組目錄唯一性保證**：
    - 逐行過濾清理所有重複或註解殘留之 `extension_dir`，嚴格保證 `php.ini` 僅保留單一精準之 `extension_dir = "<php_dir>/ext"` 設定，防止 PHP 載入錯誤或無效擴充目錄。
+
+4. **FastCGI 反向代理組態注入與正則字面替換防禦 (NoExpand)**：
+   - **Rust `NoExpand` 防吞噬機制**：以 Rust 針對 `httpd.conf` 動態置換或更新 FastCGI / PHP2Shell 設定區塊時，若置換文字包含 `$` 字元（如 Apache 代理捕獲組 `$1`），嚴禁直接以 `&str` 傳入 `Regex::replace()`。必須一律包裝為 `regex::NoExpand(&block)`，徹底防止正則引擎在二次更新時因找不到捕獲組而將 `$1` 靜默吞噬為空字串 `""`，導致 FastCGI 接收空腳本路徑引發連線重置（WSAECONNRESET 10054）與 Apache `HTTP 503 (Service Unavailable)`。
+   - **`ProxyFCGISetEnvIf` 語法邊界**：剝離代理 URL 前綴時捕獲組必須精確宣告為 `$1`，嚴禁誤跳脫為 `$$1`（Apache 會解析為 `$C:/...` 導致 FastCGI 拋出 `No input file specified.` HTTP 404）。
+   - **初次注入與二次覆蓋等冪性測試**：任何維運工具針對設定檔之修改函式，單元測試必須強制覆蓋「初次建立」與「二次覆蓋更新」雙重情境，確保多次執行維運更新工具時組態絕對不退化。
 
 ### 14.3 行程安全鎖定釋放與解壓自癒規範
 
