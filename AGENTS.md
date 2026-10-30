@@ -127,13 +127,16 @@ flowchart TD
 
 #### 5. `./LAH-Updater/` (系統自動更新部署工具)
 - **環境與主要依賴**：
-  - 核心架構：`Tauri 2 (Rust)` + 純靜態 HTML/JS 前端（`updater/`, `node-portable/`, `uninstaller/`, `backuper/` 四大獨立工具）
+  - 核心架構：`Tauri 2 (Rust)` + 純靜態 HTML/JS 前端（`updater/`, `node-portable/`, `uninstaller/`, `backuper/` 四大維運工具與 `tools/` 擴充小工具套件庫）
   - 系統原始碼打包腳本：`pack/pack.py`（Python 3.10+ 標準庫，零外部依賴，三向自動分流至 `dist/patch/`, `dist/node_modules/`, `dist/base/`）
+- **小工具開發與圖示規範**：
+  - 於 `tools/` 開發新工具時嚴禁直接沿用既有圖示，必須量身設計專屬意象，並在動手前提出 2 至 3 組視覺方案供使用者親自選擇，定案後以 `generate_icons.ps1` 產出完整多解析度 ICO/PNG 套件。
 - **常用測試與打包指令**：
   - 建立更新工具：`python updater/build.py`（或執行 `建立自動更新工具.bat`，自動執行 `cargo build --release` 並發布至 `dist/`）
   - 建立可攜 Node 工具：`python node-portable/build.py`（或執行 `建立可攜式NODE安裝工具.bat`）
   - 建立移除工具：`python uninstaller/build.py`（或執行 `建立解除安裝工具.bat`）
   - 建立備份工具：`python backuper/build.py`（或執行 `建立自動備份工具.bat`）
+  - 建立簡訊設定工具：`python tools/sms-env-editor/build.py`（或執行 `建立簡訊設定工具.bat`）
   - 原始碼全系統打包：`python pack/pack.py`（或執行 `打包智慧控管及監控系統.bat`）
 
 ---
