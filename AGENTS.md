@@ -618,6 +618,17 @@ Agent 的：
 5. **事後死角審查（搭配 [`interrogate`](./.agents/skills/interrogate/SKILL.md)）**：
    - 若使用者於程式碼修改後要求進行嚴苛審查，自動結合 [`interrogate`](./.agents/skills/interrogate/SKILL.md) 技能，僅條列具體邊界漏洞、型別不一致與資安風險，不輸出無關的冗長重構。
 
+### 13.4 前置需求規格與設計引導工作流（Matt Pocock 技能庫）
+
+為補足開發前期的需求探討與規格定案，本工作區引進 Matt Pocock 核心工程技能：
+
+- **深度盤問與文件沉澱 [`grill-with-docs`](./.agents/skills/grill-with-docs/SKILL.md) / [`grilling`](./.agents/skills/grilling/SKILL.md)**：透過決策樹前沿推進架構問題，並在對話中同步沉澱 `GLOSSARY.md` 與 ADR。
+- **規格提煉 [`to-spec`](./.agents/skills/to-spec/SKILL.md)**：將討論收斂為包含問題陳述、User Stories、實作決策與測試範圍的標準規格書。
+- **垂直切片任務拆解 [`to-tickets`](./.agents/skills/to-tickets/SKILL.md)**：拆解為端對端貫穿的曳光彈票券，明確標註阻塞依賴邊。
+- **雙軸審查 [`code-review`](./.agents/skills/code-review/SKILL.md)**：平行評估工程規範與壞味道（Standards）及規格需求相符度（Spec）。
+- **跨階段交接 [`handoff`](./.agents/skills/handoff/SKILL.md)**：在切換工作階段或更換 Agent 前產出結構化交接摘要。
+- **流程導航 [`ask-matt`](./.agents/skills/ask-matt/SKILL.md)**：指引當前情境適合的工程工作流。
+
 ---
 
 ## 14. Windows 伺服器離線維運與組態自癒防護契約 (Lesson Learnt)
@@ -730,3 +741,32 @@ Windows 作業系統具備嚴格的檔案佔用鎖定機制，覆蓋更新時必
    - 新增或修改介面內容後，必須實測各狀態（含展開與收合）確認無捲軸才能回報完成。彈窗內的日誌、說明文字等長內容區塊不在此限。
 2. **壓縮包缺失主動防呆**：
    - 巡檢目標目錄若未偵測到對應 ZIP 壓縮包，強制將該項目的核取方塊設為 DISABLE，並呈現禁止操作游標（`cursor: not-allowed`）。
+
+---
+
+## 15. 領域模型、專案辭典與架構決策沉澱規範（GLOSSARY.md & ADR）
+
+為避免跨會話、跨 Agent 協同開發時發生知識斷層或重複溝通既定規則，所有 Agent 在進行非瑣碎的需求討論、架構抉擇與領域邊界梳理時，必須主動遵循本規範沉澱知識資產：
+
+### 15.1 存放位置與邊界劃分
+
+1. **全域領域辭典（工作區根目錄 `./GLOSSARY.md`）**：
+   - 記錄地政核心業務通用術語（如「案件」、「推播頻道」、「操作員」、「權狀」等）。
+   - 記錄跨子專案通用之系統名詞與服務拓撲術語。
+2. **子專案專屬領域辭典（`./<子專案目錄>/GLOSSARY.md`）**：
+   - 僅當術語完全侷限於該子專案內部時使用（例如 `LAH-FE` 專屬之 UI 元件術語、`lah-messenger-server` 內部推播封包術語）。
+3. **架構決策紀錄（ADR）**：
+   - 全域跨專案架構決策：存於 `./docs/adr/`，採序號命名（如 `0001-sqlite-channel-db.md`）。
+   - 子專案內部架構決策：存於 `./<子專案目錄>/docs/adr/`。
+   - 採惰性建立：無決策時不預建空目錄。
+
+### 15.2 Agent 主動沉澱行為準則
+
+1. **討論中即時更新（Active Discipline）**：
+   - 在與開發者對話時（尤其是觸發 `grill-with-docs` 或討論新功能架構時），一旦釐清模糊名詞或敲定新領域術語，Agent 應當下主動更新對應的 `GLOSSARY.md`，統整「標準定義」與「避免使用的混淆詞彙（_Avoid_）」。
+   - `GLOSSARY.md` 僅能包含領域概念，嚴禁塞入實作暫存或程式碼片段。
+2. **謹慎產出架構決策紀錄（ADR）**：
+   - 唯有決策同時符合「**難以逆轉 (Hard to reverse)**」、「**缺乏脈絡時令人費解 (Surprising without context)**」及「**具備明確取捨替代方案 (Result of a real trade-off)**」三要件時，Agent 應主動提示或撰寫精簡 ADR（格式參照 `.agents/skills/domain-modeling/ADR-FORMAT.md`）。
+3. **開發前置必讀義務**：
+   - Agent 啟動任何新功能開發或跨專案修改前，除本契約外，必須優先檢查並讀取根目錄及相關子專案的 `GLOSSARY.md` 與 ADR。
+   - 實作時之命名與邏輯必須嚴格對齊既有辭典，嚴禁任意自行發明別名或推翻既有架構決策。
