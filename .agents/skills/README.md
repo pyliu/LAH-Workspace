@@ -126,3 +126,21 @@
 | [`principle-guard-the-context-window`](./principle-guard-the-context-window/SKILL.md) | 委派 | 將大量檔案讀取與平行探索委派給子代理，主對話僅保留精煉摘要 |
 | [`principle-never-block-on-the-human`](./principle-never-block-on-the-human/SKILL.md) | 委派 | 可逆且安全的操作直接執行並展示結果，僅在不可逆操作或 `AGENTS.md` 授權紅線時暫停詢問 |
 | [`principle-encode-lessons-in-structure`](./principle-encode-lessons-in-structure/SKILL.md) | 後設 | 將重複提醒的教訓編碼為 Lint、型別、測試或自動化腳本，而非僅靠文字叮嚀 |
+
+
+---
+
+## 6. Matt Pocock 需求規格與設計引導技能庫（8 個）
+
+本目錄亦精選並繁體中文化移植自 **Matt Pocock (`mattpocock/skills`)** 的核心前置工程技能，專注於**開發前期的需求深挖、架構決策樹推進、規格提煉、任務切片與雙軸碼評**，與 pstack 的深層驗證形成完整閉環：
+
+| 技能名稱 | 檔案路徑 | 適用情境 |
+|---|---|---|
+| `ask-matt` | [`ask-matt/SKILL.md`](./ask-matt/SKILL.md) | 技能流程導航器：指引從「構想 ➔ 提問 ➔ 規格 ➔ 任務票券 ➔ 實作 ➔ 雙軸審查」的完整推進路徑 |
+| `grilling` | [`grilling/SKILL.md`](./grilling/SKILL.md) | 深度決策盤問：以決策樹與輪次推進（Frontier），Agent 自行查明事實，僅向使用者確認架構決策 |
+| `grill-with-docs` | [`grill-with-docs/SKILL.md`](./grill-with-docs/SKILL.md) | 帶文件產出的深度盤問：結合 `grilling` 與 `domain-modeling`，盤問同時沉澱專案辭典與 ADR |
+| `domain-modeling` | [`domain-modeling/SKILL.md`](./domain-modeling/SKILL.md) | 領域建模與辭典：主動挑戰模糊詞彙、維護 `GLOSSARY.md` 並在具備取捨時建立架構決策紀錄（ADR） |
+| `to-spec` | [`to-spec/SKILL.md`](./to-spec/SKILL.md) | 規格提煉器：將現有討論與脈絡直接綜合成標準功能規格書（包含問題、User Stories 與實作決策） |
+| `to-tickets` | [`to-tickets/SKILL.md`](./to-tickets/SKILL.md) | 任務票券拆解：將規格切分為垂直貫穿且獨立可驗證的曳光彈票券（Tracer-bullet），標註阻塞邊界 |
+| `code-review` | [`code-review/SKILL.md`](./code-review/SKILL.md) | 雙軸程式碼審查：平行審查 Standards（程式碼規範與 Code Smells）與 Spec（規格相符度），防止單軸偏廢 |
+| `handoff` | [`handoff/SKILL.md`](./handoff/SKILL.md) | 任務交接緊湊器：在跨階段、跨會話或即將抵達 Context 上限前，產出結構化交接清單與接續建議 |
