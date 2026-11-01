@@ -1,6 +1,6 @@
 # Portal and Navigation（地政事務所入口網與全域導覽）
 
-地政事務所入口網（`/`）作為 `LAH-FE` 的總入口，會根據 `LAH-API` `/api/auth_json_api.php` 回傳之本機 IP 使用者身分（本機 `127.0.0.1` 預設對應 `HAADMIN` 系統管理員）動態渲染六大業務系統入口卡片、最新即時通公告欄，以及全域左側導覽抽屜與頂部 MOCK 模式狀態指示按鈕。
+地政事務所入口網（`/`）作為 `LAH-FE` 的總入口，會根據 `LAH-API` `/api/auth_json_api.php` 回傳之本機 IP 使用者身分（本機 `127.0.0.1` 預設短路對應 `HAADMIN` 系統管理員）動態渲染六大業務系統入口卡片、最新即時通公告欄，以及全域左側導覽抽屜與頂部 MOCK 模式狀態指示按鈕。
 
 ## Sub-features
 
@@ -20,7 +20,7 @@
 Preconditions:
 
 - `node .agents/skills/verify-lah/scripts/control-lah.js doctor` 檢查全數通過。
-- 本機 `127.0.0.1` 在 `dimension.db` 中對應 `HAADMIN`（具備 `isAdmin: true` 權限）。
+- 本機 `127.0.0.1` 由後端短路判定直接賦予 `HAADMIN`（具備 `isAdmin: true` 權限）。
 
 - **檢驗登入與 MOCK 組態 API（Verify Auth API）**：呼叫登入端點確認回傳管理員權限與模擬模式。執行 `node .agents/skills/verify-lah/scripts/control-lah.js api auth_json_api.php --data type=login --data req_ip=127.0.0.1 --json .agents/skills/verify-lah/artifacts/portal-and-navigation/auth-login.json`。回應 JSON 中 `status` 為 `1`、`configs.mock` 為 `true`、`user.id` 為 `"HAADMIN"`。
 - **開啟入口網首頁（Open Portal Home）**：導覽至首頁並等待入口網標題與系統卡片渲染完成。執行 `node .agents/skills/verify-lah/scripts/control-lah.js browser goto http://127.0.0.1:8080/ --wait-ms 2500` 與 `node .agents/skills/verify-lah/scripts/control-lah.js browser wait --text "地政事務所入口網"`。畫面出現 `HA 地政事務所入口網`，並顯示 `智慧監控工具`、`智慧控管工具`、`地價小幫手`、`測量小幫手`、`資訊實驗室`、`系統管理選單` 等入口卡片。

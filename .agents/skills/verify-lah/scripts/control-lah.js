@@ -255,6 +255,30 @@ async function checkFeReady () {
   }
 }
 
+function findPhpBinary () {
+  const localBin = path.join(SKILL_DIR, '.bin', 'php7', 'php.exe')
+  if (fs.existsSync(localBin)) return localBin
+  const updaterZip = path.join(ROOT_DIR, 'LAH-Updater', 'dist', 'base', 'php-7.4.33-Win32-vc15-x64.zip')
+  if (fs.existsSync(updaterZip)) {
+    try {
+      ensureDir(path.dirname(localBin))
+      execFileSync('powershell.exe', ['-NoProfile', '-Command', `Expand-Archive -Path '${updaterZip}' -DestinationPath '${path.dirname(localBin)}' -Force`])
+      if (fs.existsSync(localBin)) return localBin
+    } catch (e) {}
+  }
+  const candidates = [
+    'C:\\Temp\\WTF\\php7\\php.exe',
+    'C:\\php7\\php.exe',
+    'C:\\php\\php.exe',
+    'C:\\Temp\\WTF\\php85\\php.exe',
+    'php.exe'
+  ]
+  for (const c of candidates) {
+    if (c === 'php.exe' || fs.existsSync(c)) return c
+  }
+  return 'php.exe'
+}
+
 function findChromeBinary () {
   const candidates = [
     'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
@@ -318,7 +342,8 @@ async function cmdLaunch (flags) {
     state.apiMode = isApache ? 'apache-resident' : `existing-${p80.name}`
   } else {
     console.log('[LAUNCH] Port 80 未偵測到常駐 Apache，啟用筆電開發折衷方案 (LAH-API/www/run_dev_http.bat -> php -S 0.0.0.0:80 -t .)...')
-    const pid = spawnDetached('php.exe', ['-S', '0.0.0.0:80', '-t', '.'], API_DIR, 'lah-api')
+    const phpBin = findPhpBinary()
+    const pid = spawnDetached(phpBin, ['-S', '0.0.0.0:80', '-t', '.'], API_DIR, 'lah-api')
     state.spawnedPids.api = pid
     state.spawnedByUs.api = true
     state.preExistingPort80 = false
@@ -343,7 +368,7 @@ async function cmdLaunch (flags) {
     console.log(`[INFO] Port 8080 偵測到已啟動之 LAH-FE 前端開發環境 (${p8080.name}, PID ${p8080.pid})，直接沿用（不重複啟動，cleanup 亦將保留）。`)
     if (!state.spawnedByUs.fe) state.spawnedByUs.fe = false
   } else {
-    const feMode = flags['fe-mode'] || (fs.existsSync(path.join(FE_DIR, '.nuxt', 'dist', 'server')) ? 'start' : 'dev')
+    const feMode = flags['fe-mode'] || 'dev'
     const nuxtBin = path.join(FE_DIR, 'node_modules', 'nuxt', 'bin', 'nuxt.js')
     const nuxtArgs = feMode === 'start' ? [nuxtBin, 'start'] : [nuxtBin]
     console.log(`[LAUNCH] Port 8080 未偵測到既有前端服務，由測試架啟動 LAH-FE (mode=${feMode}, Port 8080)...`)
@@ -1132,10 +1157,11 @@ async function cmdStatic (flags) {
 
   // 1. LAH-API: php -l
   try {
-    const phpOut = execFileSync('php.exe', ['-l', 'api/auth_json_api.php'], { cwd: API_DIR, encoding: 'utf8' }).trim()
-    const phpOut2 = execFileSync('php.exe', ['-l', 'include/System.class.php'], { cwd: API_DIR, encoding: 'utf8' }).trim()
-    results['LAH-API'] = { ok: true, output: [phpOut, phpOut2] }
-    console.log(`[PASS] LAH-API (php -l): ${phpOut}`)
+    const phpBin = findPhpBinary()
+    const phpOut = execFileSync(phpBin, ['-l', 'api/auth_json_api.php'], { cwd: API_DIR, encoding: 'utf8' }).trim()
+    const phpOut2 = execFileSync(phpBin, ['-l', 'include/System.class.php'], { cwd: API_DIR, encoding: 'utf8' }).trim()
+    results['LAH-API'] = { ok: true, phpBin, output: [phpOut, phpOut2] }
+    console.log(`[PASS] LAH-API (${phpBin} -l): ${phpOut}`)
   } catch (e) {
     results['LAH-API'] = { ok: false, error: e.message }
     console.log(`[FAIL] LAH-API: ${e.message}`)
@@ -1153,11 +1179,11 @@ async function cmdStatic (flags) {
     console.log(`[FAIL] lah-messenger-server: ${e.message}`)
   }
 
-  // 3. LAH-Updater: python -m py_compile updater.py
+  // 3. LAH-Updater: python -m py_compile pack/pack.py tools/common/version_helper.py
   try {
-    execFileSync('python.exe', ['-m', 'py_compile', 'updater.py'], { cwd: UPDATER_DIR, encoding: 'utf8' })
-    results['LAH-Updater'] = { ok: true, checked: ['updater.py'] }
-    console.log('[PASS] LAH-Updater (python -m py_compile updater.py): 語法正確')
+    execFileSync('python.exe', ['-m', 'py_compile', 'pack/pack.py', 'tools/common/version_helper.py'], { cwd: UPDATER_DIR, encoding: 'utf8' })
+    results['LAH-Updater'] = { ok: true, checked: ['pack/pack.py', 'tools/common/version_helper.py'] }
+    console.log('[PASS] LAH-Updater (python -m py_compile pack/pack.py tools/common/version_helper.py): 語法正確')
   } catch (e) {
     results['LAH-Updater'] = { ok: false, error: e.message }
     console.log(`[FAIL] LAH-Updater: ${e.message}`)
