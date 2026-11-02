@@ -693,9 +693,13 @@ Windows 作業系統具備嚴格的檔案佔用鎖定機制，覆蓋更新時必
    - 嚴格禁止引用 Google Fonts、cdnjs、unpkg 等任何外部 URL，杜絕內網連線逾時（Hang / Timeout 30 秒至數分鐘）。
 2. **Windows Server 符號相容性（豆腐方塊防禦）**：
    - 介面避免直接使用高版本 Unicode（Unicode 11.0+）Emoji 符號，改用內嵌向量 SVG 圖示或向下相容之 Unicode 4.0 符號（如 `⚡`、`⚙️`、`🏠`），防杜舊版 Windows Server 缺少字型時顯示缺字方框。
-3. **標準打包三向分流規範 (`pack.py`)**：
+3. **標準打包三向分流規範與完整性守門員 (`pack.py`)**：
    - 依更新頻率與體積自動分流至標準目錄：業務程式至 `dist/patch/`、依賴套件至 `dist/node_modules/`、基礎環境至 `dist/base/`。
    - 各工具探測時必須實作階層式回退機制（指定子目錄 ➔ 同層目錄 ➔ `C:\Temp`），確保維運操作彈性與強健性。
+   - **執行期程式碼自動偵測與完整性守門員（防止新程式碼漏包）**：
+     - 嚴格禁止依賴脆弱的人工手動條列清單。`pack.py` 內建自動解析 `nuxt.config.js` 之 `serverMiddleware` 與 `ecosystem.config.js` 啟動腳本，自動將執行期中介軟體納入更新包。
+     - 即時通伺服器採用 `*.js` 萬用字元，確保新增 JS 模組必然被收錄。
+     - 實施**打包前事前校驗**（缺失執行期宣告即拋出 `PackIntegrityError` 中止）與**打包後事後成品校驗**（驗證 ZIP 內關鍵檔案，不完整即刻自動銷毀），並由 `tests/test_pack_integrity.py` 自動化回歸測試把關。
 
 ### 14.5 Windows 維運排程與 PowerShell 腳本規範
 
