@@ -41,3 +41,39 @@ _避免使用_: 官網, 前台
 **維運部署工具 (Updater & Maintenance Tools)**:
 指 `./LAH-Updater/`，以 Tauri 2 (Rust) 與 Python 構建之離線安裝、打包、備份與服務管理套件工具庫。  
 _避免使用_: 安裝包, 腳本庫
+
+---
+
+## 3. 發布與部署術語 (Release & Deployment)
+
+**發布資料夾 (Release Distribution Directory)**:
+指開發機上供排程定時同步至公用 NAS 之發布基底目錄（`d:\DEV\@各所分享區\@智慧管控系統\@更新程式`）。  
+_避免使用_: 共享夾, 輸出夾, 暫存夾
+
+**版號發布資料夾 (Versioned Release Directory)**:
+以前端智慧管控系統（`LAH-FE`）之 `package.json` 版本號（如 `v1.9.9`）動態建立之發布目標目錄，作為供公用 NAS 下載部署的最新標準版本容器。  
+_避免使用_: 版本夾, 最新包目錄
+
+**打包成品 (Packaged Artifacts)**:
+指通過編譯與壓縮封裝後符合發布白名單（僅限 `*.txt`, `*.pdf`, `*.exe`, `*.zip`）的二進位產物與說明文件，明確排除非發布所需的圖解截圖（如 `*.jpg`）與除錯暫存檔。  
+_避免使用_: 檔案, 打包結果
+
+---
+
+## 4. 桌面客戶端與顯示縮放術語 (Desktop Client & Display Scaling)
+
+**邏輯像素 (Logical Pixels / DIP)**:
+作業系統與 UI 框架定義的獨立設備像素（Device Independent Pixels），以 96 DPI 為基準（100%）。Tauri 視窗在設定檔中的寬度與高度預設採此單位。  
+_避免使用_: 實體點, 原始點
+
+**物理像素 (Physical Pixels)**:
+顯示器硬體真實發光點個數，數值等於 `邏輯像素 * 縮放比率`。  
+_避免使用_: 螢幕點, 顯示點
+
+**螢幕工作區高度 (Available Work Area Height)**:
+顯示器可供應用程式視窗完整展開的最大有效高度，為螢幕總解析度扣除 Windows 工作列與工作列停靠列後的實際可用區域。  
+_避免使用_: 視窗高, 螢幕高
+
+**縮放比率 (Display Scale Factor)**:
+Windows 針對高解析度顯示器設定之版面放大乘數（如 100%、125%、150%），影響 Per-Monitor DPI-aware 視窗與 Web 控制項之渲染比例。  
+_避免使用_: 放大倍率, 縮放參數
