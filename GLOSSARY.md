@@ -126,3 +126,16 @@ _避免使用_: Node版本, 模組編號
 **Dart Sass (sass)**:
 由 Sass 官方主導維護之純 JavaScript 樣式編譯器實作，不依賴本機 C++ 編譯或平台專屬二進位庫，具備跨 Node.js 執行期版本的完全相容性。  
 _避免使用_: 舊版Sass, LibSass
+
+
+---
+
+## 6. 現代化前端架構過渡術語 (Frontend Modernization & Transition)
+
+**Nuxt Bridge (@nuxt/bridge)**:
+Nuxt 官方提供之漸進式過渡框架層。允許 Nuxt 2 (Vue 2) 應用程式在不重構現有業務程式碼（維持 Options API）的前提下，將底層打包器自 Webpack 4 升級至 Webpack 5 或 Vite，並導入 Nitro 引擎，使其具備原生運行於現代 Node.js (Node 18 至 Node 26+) 之能力。  
+_避免使用_: Nuxt升級包, 過渡外掛
+
+**Nitro 伺服引擎 (Nitro Engine)**:
+Nuxt 官方之輕量跨平台伺服器引擎，提供統一之伺服器中介層、路由、快取與靜態資源傳輸標準，全面支援現代 Node.js 執行期與非同步生命週期。  
+_避免使用_: 伺服器端, 後端引擎
