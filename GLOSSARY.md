@@ -113,3 +113,16 @@ _避免使用_: 視窗高, 螢幕高
 **縮放比率 (Display Scale Factor)**:
 Windows 針對高解析度顯示器設定之版面放大乘數（如 100%、125%、150%），影響 Per-Monitor DPI-aware 視窗與 Web 控制項之渲染比例。  
 _避免使用_: 放大倍率, 縮放參數
+
+
+---
+
+## 5. 前端編譯與執行期術語 (Frontend Build & Runtime)
+
+**Node 應用程式二進位介面 (Node ABI / Runtime Version)**:
+Node.js 原生 C++ 擴充模組（如 `node-sass`）與底層 V8 引擎約定之二進位相容版本號。不同主版本號之 Node.js 對應不同 ABI（例如 Node 16 為 93，Node 26 為 147）。當原生模組未提供對應 ABI 之二進位檔時將引發崩潰。  
+_避免使用_: Node版本, 模組編號
+
+**Dart Sass (sass)**:
+由 Sass 官方主導維護之純 JavaScript 樣式編譯器實作，不依賴本機 C++ 編譯或平台專屬二進位庫，具備跨 Node.js 執行期版本的完全相容性。  
+_避免使用_: 舊版Sass, LibSass
