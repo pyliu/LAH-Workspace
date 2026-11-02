@@ -101,3 +101,11 @@ _避免使用_: AD檢查, 帳號同步
 **目錄全分割區複寫 (SyncAll Replication)**:
 Active Directory 針對所有目錄分割區（含 Schema、Configuration、DomainDnsZones、ForestDnsZones 與網域根節點）進行跨伺服器複寫之作業。日誌必須包含「SyncAll 完成」與「SyncAll 已終止，沒有錯誤」始判定為健康。  
 _避免使用_: 全部同步, 資料庫複製
+
+---
+
+## 6. 即時通訊與訊息統計術語 (Messenger & Message Counting)
+
+**核心未讀頻道 (Core Unread Channels)**:
+即時通系統中計入操作員未讀總數之四大法定推播頻道：全所公告頻道（`announcement`）、全所公務交流頻道（`lds`）、所屬課室頻道（`userdept`，如 `inf`、`reg` 等）與個人私訊頻道（`userid`）。未讀統計採白名單加總機制，排除所有附屬公告、系統頻道與非所屬部門之頻道。  
+_避免使用_: 聊天列表, 監控頻道, 訊息群組
