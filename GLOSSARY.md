@@ -38,13 +38,17 @@ _避免使用_: 聊天室, 房間, 群組
 各事務所即時通訊 WebSocket 與 API 伺服器之備援 IP 清單。桃園所具備新舊雙主機（`220.1.34.18` 與 `220.1.34.75`），其餘七所與局本部各配置一組正式主機。  
 _避免使用_: 伺服器清單, 主機列表
 
-**八所伺服器動態映射 (Eight-Office Dynamic Server Mapping)**:
-前端智慧管控系統（`LAH-FE`）依據同仁登入所別（`site`）或後端回傳之主機資訊，自動自八所伺服器字典（`tySvrIp`）解析當前所屬轄區伺服器 IP 之動態綁定機制，杜絕單一所別 IP 寫死於程式碼。  
-_避免使用_: 寫死IP, 固定網址
-
 **探活與容錯切換 (Probe & Failover)**:
 客戶端於連線逾時（3.5 秒）或連線異常時，自動依序切換至下一個候選主機進行重試之韌性機制。  
 _避免使用_: 重試, 輪播
+
+**初次安裝自動偵測填入 (First-Install Auto-Discovery)**:
+當同仁初次安裝或本機快取尚未設定伺服器 IP 時，即時通客戶端自動輪巡各所候選主機並將首台可用主機自動填入並保存之引導機制。  
+_避免使用_: 自動註冊, 自動設定
+
+**既有設定優先原則 (Saved Host Precedence)**:
+若本機已有儲存或手動設定之伺服器 IP，即時通一律嚴格以該設定為主，不得在離線或重啟時擅自自動漫遊切換或覆蓋同仁設定。  
+_避免使用_: 鎖定主機, 固定設定
 
 **智慧管控前端 (Smart Management FE)**:
 指 `./LAH-FE/`，提供即時案件進度看板、排程監控與內嵌即時通元件（`lah-messenger-*.vue`）之 Web 控制台。  
@@ -89,23 +93,3 @@ _避免使用_: 視窗高, 螢幕高
 **縮放比率 (Display Scale Factor)**:
 Windows 針對高解析度顯示器設定之版面放大乘數（如 100%、125%、150%），影響 Per-Monitor DPI-aware 視窗與 Web 控制項之渲染比例。  
 _避免使用_: 放大倍率, 縮放參數
-
----
-
-## 5. 監控與維運戰情面板術語 (Monitoring & Dashboard)
-
-**AD 同步狀態監控 (AD Sync Status Monitor)**:
-指戰情面板中監控 Active Directory 網域控制站目錄複寫作業之模組（`lah-monitor-board-adsync.vue`）。透過後端郵件快取解析 `repadmin /syncall` 執行日誌，以雙向嚴格比對機制確認目錄複寫作業完整終止且無任何網路或 RPC 錯誤。  
-_避免使用_: AD檢查, 帳號同步
-
-**目錄全分割區複寫 (SyncAll Replication)**:
-Active Directory 針對所有目錄分割區（含 Schema、Configuration、DomainDnsZones、ForestDnsZones 與網域根節點）進行跨伺服器複寫之作業。日誌必須包含「SyncAll 完成」與「SyncAll 已終止，沒有錯誤」始判定為健康。  
-_避免使用_: 全部同步, 資料庫複製
-
----
-
-## 6. 即時通訊與訊息統計術語 (Messenger & Message Counting)
-
-**核心未讀頻道 (Core Unread Channels)**:
-即時通系統中計入操作員未讀總數之四大法定推播頻道：全所公告頻道（`announcement`）、全所公務交流頻道（`lds`）、所屬課室頻道（`userdept`，如 `inf`、`reg` 等）與個人私訊頻道（`userid`）。未讀統計採白名單加總機制，排除所有附屬公告、系統頻道與非所屬部門之頻道。  
-_避免使用_: 聊天列表, 監控頻道, 訊息群組
