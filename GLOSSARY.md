@@ -156,3 +156,24 @@ _避免使用_: 時間標籤, 檢查點, tag
 在全系統標準 SOP 基底之上，依據本次實際打包異動之子專案清單，動態向現場管理師提示之專屬重啟、快取清除或連接埠探針關注指引。  
 _避免使用_: 自訂SOP, 分流說明
 
+---
+
+## 8. 跨版本資料庫橋接術語 (Cross-Version Database Bridge)
+
+**雙通道 OCI8 橋接 (Dual-Channel OCI8 Bridge)**:
+指 PHP 8.5 現代化軌道（`LAH-API/API/`）在連線舊版 Oracle 9i 資料庫時，優先透過 Apache `mod_php7` 本機迴路（HTTP Loopback）借用長駐之 `oci8_11g` 執行查詢，並於 HTTP 通道不可用時自動退回（Fallback）至環境變數隔離之 PHP 7.4 CLI 子程序（`proc_open`）的雙層韌性中介機制。  
+_避免使用_: 轉接頭, 外掛連線, 代理查詢
+
+**全二進位透明封裝 (Binary-Transparent Envelope)**:
+指跨 PHP 版本橋接通訊時，將請求端之 SQL 語句、綁定參數及回應端之欄位名稱（Keys）、欄位資料值（Values）與錯誤訊息全面以 Base64 編碼傳輸之協定規範，確保內含 `CP950` (Big5) 雙位元組內碼或造字之資料在跨越 JSON 序列化邊界時零失真且不觸發 `JSON_ERROR_UTF8`。  
+_避免使用_: 字串打包, JSON轉碼
+
+**雙重本機鎖 (Dual Loopback Guard)**:
+指內部 HTTP 橋接端點（`/api/ora_bridge.php`）同時強制驗證「實體來源 IP 必須為本機迴路且無代理轉發標頭」與「基於共用 `.env` 金鑰計算之 HMAC-SHA256 請求簽章」的雙層資安防禦邊界。  
+_避免使用_: 本機白名單, 內部驗證
+
+**連線能力守門員 (Reachability Gatekeeper)**:
+指 `OraDBWrapper` 與系統探針在發起 Oracle 查詢前，綜合判定「原生 `oci8` 擴充或雙通道 OCI8 橋接至少其一就緒」且「目標資料庫網路埠可達」之前置檢查機制。  
+_避免使用_: 連線檢查, ping測試
+
+
