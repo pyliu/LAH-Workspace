@@ -177,3 +177,18 @@ _避免使用_: 本機白名單, 內部驗證
 _避免使用_: 連線檢查, ping測試
 
 
+---
+
+## 9. 系統效能與資源治理術語 (Performance & Resource Governance)
+
+**工作子程序連線回收閾值 (Worker Connection Recycling Threshold / MaxConnectionsPerChild)**:
+指 Apache `mpm_winnt` 單一工作子程序（Worker Process）在累計服務達指定 TCP 連線次數後，由父程序優雅輪替（Graceful Recycle）並釋放累積之 `mod_php7` 執行緒配置器的內建機制。  
+_避免使用_: 強制重啟, 砍進程
+
+**執行緒配置器水位上限 (Thread Allocator Free Cap / MaxMemFree)**:
+指 Apache 每個工作執行緒之 APR 記憶體配置器（Allocator）在完成請求後最多保留不歸還作業系統的空閒記憶體容量上限（單位 KB）。  
+_避免使用_: 記憶體限制, 快取大小
+
+**雙層記憶體防護閘 (Dual-Layer Memory Guard)**:
+指第一層由 Apache `mpm_winnt` 內建 `MaxConnectionsPerChild` 與 `MaxMemFree` 於子程序內部無感回收記憶體，第二層由系統守護程序（`service_runner.js`）依記憶體水位閾值執行保護性重啟的雙保險治理架構。  
+_避免使用_: 定時重開, 排程殺進程
