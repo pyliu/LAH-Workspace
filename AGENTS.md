@@ -14,7 +14,7 @@
 | `./LAH-API/` | API 伺服器／後端核心 | PHP 7.3.x、Legacy HTML、Oracle 9i、SQLite 3 | 提供 HTTP REST API、維護舊版網頁，並存取 Oracle 與 SQLite |
 | `./LAH-FE/` | 智慧管控系統前端 | Nuxt 2.15.8 (Vue 2)、BootstrapVue 2.23.0 | 提供智慧監控管理介面，並內嵌即時通功能（移植元件群 `lah-messenger-*.vue`）；透過 HTTP 呼叫 `LAH-API`，並透過 WebSocket/HTTP 與 `lah-messenger-server` 進行即時通訊 |
 | `./lah-messenger-server/` | 即時通伺服器 | Node.js (CommonJS)、ws ^7.4.6、Express ^4 | 維持 WebSocket 長連線、處理即時事件與附件，並存取 SQLite |
-| `./lah-messenger/` | 桃園即時通桌面客戶端 | Electron 39.8.10、Nuxt 2.15.8、Nuxtron ^0.3.1 | 透過 HTTP 呼叫 `LAH-API` 處理業務功能，透過 WebSocket 連線即時通伺服器 |
+| `./lah-messenger/` | 桃園即時通桌面客戶端 | Tauri 2 (Rust)、Nuxt 2.15.8 (Vue 2)、BootstrapVue ^2.18.1 | 透過 HTTP 呼叫 `LAH-API` 處理業務功能，透過 WebSocket 連線即時通伺服器 |
 | `./LAH-Updater/` | 系統自動安裝與更新部署工具 | Tauri 2 (Rust)、純靜態 HTML/JS、Python 3.10+ (僅 pack.py 打包腳本) | 提供自動安裝與更新 (updater)、重要資料備份 (backuper)、可攜式 Node 安裝 (node-portable) 與自動移除 (uninstaller) 工具，對齊解壓覆蓋並控制 Apache 與 PM2 服務重啟 |
 
 ### 1.1 資料流向與架構拓撲
@@ -23,7 +23,7 @@
 flowchart TD
     subgraph Clients["客戶端層 (Client Layer)"]
         FE["LAH-FE<br/>智慧管控前端 (Nuxt 2 / Vue 2)<br/>含 lah-messenger-*.vue 元件群"]
-        CLIENT["lah-messenger<br/>即時通桌面端 (Electron / Nuxt 2)"]
+        CLIENT["lah-messenger<br/>即時通桌面端 (Tauri 2 / Nuxt 2)"]
     end
 
     subgraph Servers["服務中介層 (Service Layer)"]
@@ -112,18 +112,15 @@ flowchart TD
   - 語法檢查：`node -c <file_path>`（修改後必須執行語法檢查以防產線重啟失敗）
 
 #### 4. `./lah-messenger/` (桃園即時通桌面客戶端)
-- **環境與主要依賴**（`package.json`）：
-  - 桌面主框架：`Electron 39.8.10`
-  - 整合與打包工具：`nuxtron ^0.3.1`、`electron-builder ^22.14.13`
+- **環境與主要依賴**（`src-tauri/Cargo.toml` & `package.json`）：
+  - 桌面核心框架：`Tauri 2 (Rust 2021 Edition)`
   - Renderer 渲染端：`Nuxt.js ^2.15.8`（基於 `Vue 2.x`）
   - UI 框架：`BootstrapVue ^2.18.1`（配合 `bootstrap ^4.5.2`）
 - **常用開發與打包指令**：
-  - 開發模式（Electron + Nuxt 熱重載）：`npm run dev`（執行 `nuxtron`）
-  - 原生依賴安裝：`npm run postinstall`（執行 `electron-builder install-app-deps`）
-  - 標準應用建置：`npm run build`（執行 `nuxtron build`，打包前需確認授權）
-  - Windows 全架構安裝包建置：`npm run build:win`（執行 `nuxtron build --win --ia32 --x64`）
-  - Windows 32 位元安裝包建置：`npm run build:x86`（執行 `nuxtron build --win --ia32`）
-  - Windows 64 位元安裝包建置：`npm run build:x64`（執行 `nuxtron build --win --x64`）
+  - 開發模式（Tauri + Nuxt 熱重載）：`npm run tauri:dev`
+  - 前端靜態建置：`npm run generate:nuxt`（執行 `nuxt generate renderer`）
+  - Rust 語法與單元測試：`cargo test --manifest-path src-tauri/Cargo.toml`
+  - 正式安裝包與可攜版建置：`npm run tauri:build`（打包前需確認授權）
 
 #### 5. `./LAH-Updater/` (系統自動更新部署工具)
 - **環境與主要依賴**：

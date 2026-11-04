@@ -192,3 +192,15 @@ _避免使用_: 記憶體限制, 快取大小
 **雙層記憶體防護閘 (Dual-Layer Memory Guard)**:
 指第一層由 Apache `mpm_winnt` 內建 `MaxConnectionsPerChild` 與 `MaxMemFree` 於子程序內部無感回收記憶體，第二層由系統守護程序（`service_runner.js`）依記憶體水位閾值執行保護性重啟的雙保險治理架構。  
 _避免使用_: 定時重開, 排程殺進程
+
+---
+
+## 10. 終端網路識別與虛擬網卡過濾術語 (Client Network Identity & Virtual NIC Filtering)
+
+**有效公務網卡位址 (Effective Office NIC Address)**:
+指桌面客戶端排除虛擬網卡（VMware、Hyper-V、WSL、VirtualBox、VPN 等）與本機迴路介面後，經由作業系統出站路由探測（Outbound Route Probe）或地政事務所優先網段（`192.168.[10..89].x`）遴選出唯一用於代表該操作員終端機之實體 IPv4 位址。  
+_避免使用_: 本機IP, 第一張網卡IP, 隨機網卡位址
+
+**虛擬網卡雜訊過濾 (Virtual NIC Noise Filtering)**:
+指即時通客戶端與後端 IP 同步機制在採集本機網路介面時，透過介面識別名稱黑名單與虛擬閘道位址特徵（如 `.1` 虛擬主機端點與 `.254` 交換器閘道），攔截非實體辦公網段 IP 進入 `IPResolver.db` 與 `dimension.db` 之防禦機制。  
+_避免使用_: IP白名單, 網卡刪除
