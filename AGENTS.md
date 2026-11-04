@@ -130,7 +130,7 @@ flowchart TD
   - 於 `tools/` 開發新工具時嚴禁直接沿用既有圖示，必須量身設計專屬意象，並在動手前提出 2 至 3 組視覺方案供使用者親自選擇，定案後以 `generate_icons.ps1` 產出完整多解析度 ICO/PNG 套件。
 - **常用測試與打包指令**：
   - 建立安裝與更新工具：`python tools/updater/build.py`（或執行 `建立自動安裝與更新工具.bat`，自動執行 `cargo build --release` 並發布至 `dist/`）
-  - 建立可攜 Node 工具：`python tools/node-portable/build.py`（或執行 `建立可攜NODE工具.bat`）
+  - 建立 Node 沙盒監管工具：`python tools/node-portable/build.py`（或執行 `建立NODE沙盒監管工具.bat`，亦相容 `建立可攜NODE工具.bat`）
   - 建立移除工具：`python tools/uninstaller/build.py`（或執行 `建立解除安裝工具.bat`）
   - 建立備份工具：`python tools/backuper/build.py`（或執行 `建立自動備份工具.bat`）
   - 建立管理儀表板工具：`python tools/dashboard/build.py`（或執行 `建立管理儀表板工具.bat`）
