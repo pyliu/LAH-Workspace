@@ -204,3 +204,20 @@ _避免使用_: 本機IP, 第一張網卡IP, 隨機網卡位址
 **虛擬網卡雜訊過濾 (Virtual NIC Noise Filtering)**:
 指即時通客戶端與後端 IP 同步機制在採集本機網路介面時，透過介面識別名稱黑名單與虛擬閘道位址特徵（如 `.1` 虛擬主機端點與 `.254` 交換器閘道），攔截非實體辦公網段 IP 進入 `IPResolver.db` 與 `dimension.db` 之防禦機制。  
 _避免使用_: IP白名單, 網卡刪除
+
+---
+
+## 11. 跨系統沙盒治理與資安自檢術語 (Cross-System Sandbox Governance & Security Audit)
+
+**地政業務 API 監測服務 (Tyland Monitoring Backend / tyland-monitoring-backend)**:
+指於伺服器（如 `220.1.34.221`）以 Node.js 實作並監聽 Port 8082 之地政核心 API 監測與 WebSocket 服務端，受可攜 Node 沙盒與 PM2 守護管轄。  
+_避免使用_: 即時通附件服務, 前端伺服器
+
+**動態服務資安自檢 (Dynamic Service Security Audit)**:
+指維運工具自動依據當前 PM2 受管進程實體識別動態推導受檢端口與服務定義，進行 HTTP 指紋過濾與沙盒零污染驗證之機制。  
+_避免使用_: 固定端口檢測, 靜態掃描
+
+**沙盒內嵌維運指南 (Embedded Sandbox Guidance)**:
+指於維運控制台介面直接內嵌之零全域污染架構規範、常用 PM2 終端指令速查與快照固化 SOP，免除現場操作人員攜帶或翻閱外部文件之負擔。  
+_避免使用_: 幫助文件, 說明書頁面
+
