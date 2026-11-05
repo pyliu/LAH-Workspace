@@ -70,11 +70,35 @@ _避免使用_: 綠色版目錄, 私有 Node
 指由維運工具或排程自動探測受管服務端口之 HTTP 回應標頭與沙盒狀態，驗證未洩漏敏感執行期特徵並產出合格佐證文件之檢核機制。  
 _避免使用_: 漏洞檢查, 標頭測試
 
+**統一日誌儲存庫 (Unified Logs Repository)**:
+指主機安裝根目錄之 <根目錄>\logs，統籌彙整前端、即時通、API、WinSW 系統服務與 Web 伺服器之集中式日誌容器。  
+_避免使用_: 日誌資料夾, LOG區
+
+**日誌生命週期治理 (Log Lifecycle Governance)**:
+指針對受管服務（含 Apache 與 PM2）實施之全自動歷史日誌 Gzip 壓縮歸檔、空間回收與過期安全清理機制。  
+_避免使用_: 刪Log, 日誌清理
+
+**日誌留存週期 (Log Retention Policy)**:
+指歷史歸檔日誌自產生起至安全抹除之維運保留天數（預設 30 天）。  
+_避免使用_: 保存期限, 過期時間
+
 ---
 
 **API 雙軌機制 (API Dual-Track Mechanism)**:
 指智慧管控系統前端（`LAH-FE`）支援即時切換後端 API 服務軌道（PHP 7.4 穩定舊軌 Port 80 ↔ PHP 8.5 現代化新軌 FastCGI Port 8085），透過前端 Axios 請求攔截器動態改寫端點路徑（`/api/*.php` ↔ `/LAH-API/api/*.php`）以利平滑演進與無中斷灰度驗證。  
 _避免使用_: 雙核心, 雙版本
+
+**SQLite 忙碌等待機制 (SQLite Busy Timeout)**:
+當多個 FastCGI 工作處理程序並行讀寫同一個本機 SQLite 快取資料庫時，於鎖定衝突瞬間自動重試並退避等待指定毫秒數（如 5000ms）之避讓防護機制，徹底消除 Windows 平台拋出代碼 10 之 `SQLITE_IOERR`。  
+_避免使用_: 資料庫鎖, 延遲重試
+
+**架構惰性建立 (Schema Lazy-Initialization)**:
+僅在 SQLite 資料庫實體檔案不存在時才執行 `CREATE TABLE` 等 DDL 初始化語法，避免於每次 HTTP 連線生命週期中重複競爭架構獨佔鎖。  
+_避免使用_: 自動建表, 啟動檢查
+
+**靜態請求快速路徑 (Static Request Fast-Path)**:
+針對使用者頭像（`get_user_img.php`）、輪播圖片或靜態匯出等高頻非業務核心請求，於初始化階段繞過重型資料庫連線與全域查表之解耦機制。  
+_避免使用_: 快取路徑, 靜態路由
 
 **戰情儀表板代理路徑 (Dashboard Proxy Routes)**:
 指前端戰情儀表板透過 Nuxt 內建 `proxy`（基於 `http-proxy-middleware`）轉發至遠端主機之專屬監控代理路由（如 `/l05proxy` 轉發至建物圖籍主機、`/smsproxy` 轉發至簡訊主機），其網路通訊嚴格獨立於本地 `LAH-API` 雙軌調度邏輯之外。  
