@@ -54,6 +54,10 @@ _避免使用_: 鎖定主機, 固定設定
 指 `./LAH-FE/`，提供即時案件進度看板、排程監控與內嵌即時通元件（`lah-messenger-*.vue`）之 Web 控制台。  
 _避免使用_: 官網, 前台
 
+**管理儀表板 (Management Dashboard)**:
+指 `./LAH-Updater/tools/dashboard/`，以 Tauri 2 與純 HTML/JS 構建之指標優先（Metrics-Centric）監控桌面中樞，整合主機硬體指標、端口健康探針、就地服務快控、即時日誌流與核心組態編輯器。  
+_避免使用_: 監控台, 戰情後台
+
 **維運部署工具 (Updater & Maintenance Tools)**:
 指 `./LAH-Updater/`，以 Tauri 2 (Rust) 與 Python 構建之離線安裝、打包、備份與服務管理套件工具庫。  
 _避免使用_: 安裝包, 腳本庫
