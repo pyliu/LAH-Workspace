@@ -68,6 +68,16 @@ _避免使用_: 漏洞檢查, 標頭測試
 
 ---
 
+**API 雙軌機制 (API Dual-Track Mechanism)**:
+指智慧管控系統前端（`LAH-FE`）支援即時切換後端 API 服務軌道（PHP 7.4 穩定舊軌 Port 80 ↔ PHP 8.5 現代化新軌 FastCGI Port 8085），透過前端 Axios 請求攔截器動態改寫端點路徑（`/api/*.php` ↔ `/LAH-API/api/*.php`）以利平滑演進與無中斷灰度驗證。  
+_避免使用_: 雙核心, 雙版本
+
+**戰情儀表板代理路徑 (Dashboard Proxy Routes)**:
+指前端戰情儀表板透過 Nuxt 內建 `proxy`（基於 `http-proxy-middleware`）轉發至遠端主機之專屬監控代理路由（如 `/l05proxy` 轉發至建物圖籍主機、`/smsproxy` 轉發至簡訊主機），其網路通訊嚴格獨立於本地 `LAH-API` 雙軌調度邏輯之外。  
+_避免使用_: 轉發路由, 監控接口
+
+---
+
 ## 3. 發布與部署術語 (Release & Deployment)
 
 **發布資料夾 (Release Distribution Directory)**:
