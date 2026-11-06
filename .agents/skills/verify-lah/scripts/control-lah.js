@@ -408,7 +408,7 @@ async function cmdLaunch (flags) {
 
   // 等待所有服務就緒
   console.log('[WAIT] 等待所有服務進入可操作就緒狀態 (Ready)...')
-  const deadline = Date.now() + 90000
+  const deadline = Date.now() + 150000
   let lastStatus = ''
   while (Date.now() < deadline) {
     const feReady = await checkFeReady()
@@ -426,7 +426,7 @@ async function cmdLaunch (flags) {
     }
     await sleep(1500)
   }
-  console.error('[FAIL] 啟動逾時（90 秒），請執行 doctor 檢查各端點狀態。')
+  console.error('[FAIL] 啟動逾時（150 秒），請執行 doctor 檢查各端點狀態。')
   process.exit(1)
 }
 

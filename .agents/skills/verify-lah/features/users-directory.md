@@ -4,7 +4,7 @@
 
 ## Sub-features
 
-- `users-api-query`：透過 `user_json_api.php`（`type=department_users` 或 `type=search_user`）查詢全所／部門在職名冊或特定關鍵字使用者。
+- `users-api-query`：透過 `user_json_api.php`（`type=department_users`）查詢全所／部門在職名冊；關鍵字過濾則由前端記憶體即時比對。
 - `users-dept-filter`：在 `/users` 頁面切換部門下拉選單，動態更新各分組下的同仁卡片。
 - `users-group-switch`：切換「職稱」、「角色」、「工作」、「性別」分組按鈕，重組摺疊面板。
 - `users-keyword-filter`：輸入關鍵字即時過濾可見的同仁名片。
@@ -31,3 +31,4 @@ Preconditions:
 - `/users` 頁面在 `mounted` 初始化時，預設選取當前登入者所屬部門（`this.department = this.user.unit`，本機環境為資訊課），如需檢視全所同仁可主動切換部門下拉選單至「全所」。
 - `/users` 的關鍵字輸入框 placeholder 為 `... 可輸入過濾字串 ...`，使用包含式比對 `--placeholder "可輸入過濾字串"` 即可穩定匹配。
 - 「在職／離職」核取方塊僅在具備 `isAdmin` 或 `isUserMgtStaff` 權限時才可勾選（本機 `127.0.0.1` 預設短路短截為 `HAADMIN`，具備該權限）。
+- `/users` 頁面的關鍵字過濾是由前端 `filterUser(user)` 於記憶體中即時進行字串匹配（涵蓋姓名、代碼、工作、職稱、單位、IP、分機等），無須亦不會對後端發送額外的 `search_user` API 請求；後端查詢 SQLite 資料庫的實際類別位於 `LAH-API/www/include/SQLiteUser.class.php`。

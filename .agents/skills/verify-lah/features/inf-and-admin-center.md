@@ -27,5 +27,5 @@ Preconditions:
 ## Gotchas
 
 - `inf/index.vue` 頁面右側實際包含 6 張監控卡片（`/inf/mgt`、`/inf/dashboard`、`/inf/xap`、`/inf/lxhweb`、`/inf/xap/connectivity` 以及 `/bureau` 監控輪播）。
-- `system_json_api.php` 具有嚴格的 `isAdmin` 權限守衛（`!$auth['isAdmin']` 時回傳 `非 Admin 無法執行命令`）；本機 `127.0.0.1` 在 `dimension.db` 中預設綁定 `HAADMIN`（`authority = 2`），因此可正常通過。
+- `system_json_api.php` 具有嚴格的 `isAdmin` 權限守衛（`!$auth['isAdmin']` 時回傳 `非 Admin 無法執行命令`）；本機 `127.0.0.1` 經後端核心程式碼（`System::calcEffectiveAuthority()` 與 `SQLiteUser::getUserByIP()`）短路判定直接賦予 `HAADMIN`（`authority = 2`），因此可正常通過。
 - **嚴禁在驗證過程中呼叫 `type=switch_disable_mock`**，且由於 `.env` 中已設定 `MOCK=true`，`System::isMockMode()` 會優先讀取 `.env` 的 `MOCK=true` 確保安全。
