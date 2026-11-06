@@ -273,3 +273,20 @@ _避免使用_: 滿版拉伸, 垂直填滿
 **大螢幕字體縮放級距 (Large-Screen Typography Scaling)**:
 指介面隨視窗擴展至工作台規格時，全域基準字體與按鈕 padding 適度放大 1px 至 1.5px，兼具高解析度易讀性與專業儀表板精緻度之比例調整機制。  
 _避免使用_: 大字體, 全局放大
+
+**Node2Shell 縱深緩解架構 (Node2Shell Deep Mitigation Architecture)**:
+指針對 Node.js Brotli 解碼器越界寫入重大缺陷（CVE-2026-111497），於外圍 Apache 反向代理（標頭剝除）、內部 WinSW 背景守護（降權至 LocalService）與前端應用層（serverMiddleware 415 阻斷）建立之三層防護網，使系統在維持 Nuxt 2 (Vue 2) SSR 運作下兼具免疫與防擴散之安全架構。  
+_避免使用_: Brotli補丁, 單點過濾
+
+**免密碼系統低權限服務帳號 (Passwordless Low-Privilege Service Account / LocalService)**:
+指 Windows 內建之受限執行識別身分（`NT AUTHORITY\LocalService`）。具備本機最低執行特權且對外以匿名身分運作，透過維運工具自動設定專屬目錄 ACL 授權，杜絕背景服務遭 RCE 攻陷時提權突破系統邊界之治理模式。  
+_避免使用_: 系統帳號, 管理員服務, SYSTEM
+
+**標頭剝除過濾 (Header Stripping Filter)**:
+指於 Apache 2.4 代理層透過 `<If "%{HTTP:Content-Encoding} =~ /br/i"> RequestHeader unset Content-Encoding </If>` 條件剝除傳入請求之壓縮標頭，使潛在惡意 Payload 視為未壓縮純文字處理，徹底繞開底層易受害之 C++ 解碼器之處置手段。  
+_避免使用_: 阻斷標頭, 請求清空
+
+**應用層請求編碼守門員 (Application-Level Encoding Gatekeeper)**:
+指於 Nuxt 2 SSR 之 `serverMiddleware` 頂層對所有傳入請求進行之編碼檢查機制。若偵測到 `content-encoding` 含有 `br`，直接以 HTTP 415 (Unsupported Media Type) 拒絕連線，作為繞過外層反向代理直叩端口時之應用層自衛防線。  
+_避免使用_: 中介攔截器, 網址過濾
+
