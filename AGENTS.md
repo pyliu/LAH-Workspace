@@ -1,4 +1,4 @@
-# LAH 系統全域架構契約
+﻿# LAH 系統全域架構契約
 
 > 適用範圍：本工作區根目錄及其五個平級 Git 子專案。  
 > 目的：建立 AI Agent（含 Master Agent / Subagents）在跨專案開發、修改程式碼、執行終端指令與驗證時必須遵守的系統邊界與安全規則。
@@ -776,3 +776,19 @@ Windows 作業系統具備嚴格的檔案佔用鎖定機制，覆蓋更新時必
 3. **開發前置必讀義務**：
    - Agent 啟動任何新功能開發或跨專案修改前，除本契約外，必須優先檢查並讀取根目錄及相關子專案的 `GLOSSARY.md` 與 ADR。
    - 實作時之命名與邏輯必須嚴格對齊既有辭典，嚴禁任意自行發明別名或推翻既有架構決策。
+
+---
+
+## Agent skills
+
+### Issue tracker
+
+本專案之需求與規格採本機 Markdown 檔案管理，存放於 .scratch/<feature>/ 目錄下。詳見 docs/agents/issue-tracker.md。
+
+### Triage labels
+
+採用標準五大分類標籤（needs-triage, ready-for-agent 等），記錄於 Issue 檔案的 Status: 行。詳見 docs/agents/triage-labels.md。
+
+### Domain docs
+
+採用單一領域脈絡（Single-context）配置，以專案根目錄的 GLOSSARY.md 與 docs/adr/ 為主要知識庫。詳見 docs/agents/domain.md。
